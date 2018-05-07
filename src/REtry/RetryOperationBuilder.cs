@@ -108,6 +108,9 @@ namespace REtry
 
                     foreach (var handler in Handlers)
                     {
+                        if (cancellationToken.IsCancellationRequested)
+                            break;
+
                         wasHandled = await handler(ex).ConfigureAwait(false);
                     }
 

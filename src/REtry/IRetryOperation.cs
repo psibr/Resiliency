@@ -9,7 +9,9 @@ namespace REtry
         RetryHandlerInfo Handler { get; }
         RetryTotalInfo Total { get; }
 
-        Task Wait(int milliseconds, CancellationToken cancellationToken = default);
-        Task Wait(TimeSpan period, CancellationToken cancellationToken = default);
+        CancellationToken CancellationToken { get; }
+
+        Task Wait(int millisecond);
+        Task Wait(TimeSpan period);
     }
 }
