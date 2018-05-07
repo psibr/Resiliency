@@ -6,9 +6,9 @@ namespace REtry.Tests
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class REtryActionExtensionsTests
+    public class RetriesAreExhaustedTests
     {
-        public REtryActionExtensionsTests()
+        public RetriesAreExhaustedTests()
         {
             Retry.RetryOperationFactory = (handlerInfo, totalInfo) => new FakeRetryOperation(handlerInfo, totalInfo);
         }
