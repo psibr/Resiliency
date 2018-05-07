@@ -19,14 +19,10 @@ namespace REtry
 
         public CancellationToken CancellationToken { get; }
 
-        public Task Wait(TimeSpan period, CancellationToken cancellationToken= default)
-        {
-            return Task.Delay(period);
-        }
+        public Task Wait(TimeSpan period, CancellationToken cancellationToken = default) =>
+            Task.Delay(period);
 
-        public Task Wait(int milliseconds, CancellationToken cancellationToken = default)
-        {
-            return Task.Delay(milliseconds);
-        }
+        public Task Wait(int milliseconds, CancellationToken cancellationToken = default) =>
+            Task.Delay(milliseconds);
     }
 }
