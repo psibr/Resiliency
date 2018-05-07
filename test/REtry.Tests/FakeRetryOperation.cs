@@ -18,11 +18,16 @@ namespace REtry.Tests
 
         public RetryTotalInfo Total { get; }
 
-        public Task Wait(int milliseconds, CancellationToken cancellationToken = default(CancellationToken)) => 
-            Wait(TimeSpan.FromMilliseconds(milliseconds), cancellationToken);
+        public CancellationToken CancellationToken { get; }
 
-        public Task Wait(TimeSpan period, CancellationToken cancellationToken = default(CancellationToken))
+        public Task Wait(int milliseconds) => 
+            Wait(TimeSpan.FromMilliseconds(milliseconds));
+
+        public Task Wait(TimeSpan period)
         {
+            if (CancellationToken.IsCancellationRequested)
+                return Task.FromCanceled(CancellationToken);
+
             return Task.CompletedTask;
         }
     }
