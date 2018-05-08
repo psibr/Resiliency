@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\REtry\REtry.csproj" />
+    <ProjectReference Include="..\..\src\Resiliency\Resiliency.csproj" />
   </ItemGroup>
 
 </Project>

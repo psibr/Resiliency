@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/REtry.sln"
+                "${workspaceFolder}/Resiliency.sln"
             ],
             "problemMatcher": "$msCompile"
         },
@@ -17,7 +17,7 @@
             "type": "process",
             "args": [
                 "test",
-                "${workspaceFolder}/test/REtry.Tests/REtry.Tests.csproj"
+                "${workspaceFolder}/test/Resiliency.Tests/Resiliency.Tests.csproj"
             ],
             "problemMatcher": "$msCompile",
             "group": {
