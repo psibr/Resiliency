@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace REtry.Tests
+namespace Resiliency.Tests
 {
     using System.Threading;
     using System.Threading.Tasks;

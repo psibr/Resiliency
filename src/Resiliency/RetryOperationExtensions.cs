@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace REtry
+namespace Resiliency
 {
     public static class RetryOperationExtensions
     {
@@ -16,7 +16,7 @@ namespace REtry
         public static RetryHandlerResult Unhandled(this RetryOperation retry) => RetryHandlerResult.Unhandled;
 
         public static Task WaitAsync(this RetryOperation retry, TimeSpan period) => 
-            Operation.WaiterFactory(retry.CancellationToken).WaitAsync(period);
+            ResilientOperation.WaiterFactory(retry.CancellationToken).WaitAsync(period);
     }
 
     public enum RetryHandlerResult

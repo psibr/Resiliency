@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace REtry
+namespace Resiliency
 {
     public class ResilientOperationBuilder<TOperation>
     {
@@ -17,9 +17,11 @@ namespace REtry
         }
 
         private List<Func<Exception, Task<RetryHandlerResult>>> Handlers { get; }
+
+        private TimeSpan TimeoutPeriod = Timeout.InfiniteTimeSpan;
         private TOperation Operation { get; }
 
-        public ResilientOperationBuilder<TOperation> WhenExceptionIs<TException>(Func<RetryOperation, TException, Task<RetryHandlerResult>> handler)
+        public ResilientOperationBuilder<TOperation> RetryWhenExceptionIs<TException>(Func<RetryOperation, TException, Task<RetryHandlerResult>> handler)
             where TException : Exception
         {
             var info = new RetryHandlerInfo();
@@ -49,7 +51,7 @@ namespace REtry
             return this;
         }
 
-        public ResilientOperationBuilder<TOperation> When(
+        public ResilientOperationBuilder<TOperation> RetryWhen(
             Func<Exception, bool> condition,
             Func<RetryOperation, Exception, Task<RetryHandlerResult>> handler)
         {
@@ -80,29 +82,51 @@ namespace REtry
             return this;
         }
 
-        public Func<CancellationToken, Task> GetResilientOperation()
+        public ResilientOperationBuilder<TOperation> TimeoutAfter(TimeSpan period)
         {
-            return Invoke;
+            TimeoutPeriod = period;
+
+            return this;
         }
 
-        public async Task Invoke(CancellationToken cancellationToken = default)
+        public Func<CancellationToken, Task> GetOperation()
+        {
+            return InvokeAsync;
+        }
+
+        public async Task InvokeAsync(CancellationToken cancellationToken = default)
         {
             do
             {
                 try
                 {
+                    var taskSet = new List<Task>();
+                    Task operationTask;
+                    
                     switch (Operation)
                     {
                         case Func<CancellationToken, Task> asyncCancellableOperation:
-                            await asyncCancellableOperation(cancellationToken).ConfigureAwait(false);
+                            operationTask = asyncCancellableOperation(cancellationToken);
                             break;
                         case Func<Task> asyncOperation:
-                            await asyncOperation().ConfigureAwait(false);
+                            operationTask = asyncOperation();
                             break;
                         case Action syncOperation:
-                            syncOperation();
+                            operationTask = Task.Run(() => syncOperation());
                             break;
+                        default:
+                            throw new NotSupportedException($"Operation of type {Operation.GetType()}");
                     }
+
+                    taskSet.Add(operationTask);
+
+                    if(TimeoutPeriod != Timeout.InfiniteTimeSpan)
+                        taskSet.Add(Task.Delay(TimeoutPeriod));
+
+                    var firstCompletedTask = await Task.WhenAny(taskSet).ConfigureAwait(false);
+
+                    if(firstCompletedTask != operationTask)
+                        throw new TimeoutException();
                 }
                 catch (Exception ex)
                 {
@@ -114,9 +138,6 @@ namespace REtry
                             break;
 
                         handlerResult = await handler(ex).ConfigureAwait(false);
-
-                        if (handlerResult == RetryHandlerResult.Cancelled)
-                            break;
                     }
 
                     if (handlerResult != RetryHandlerResult.Handled)

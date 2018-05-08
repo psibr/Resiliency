@@ -1,4 +1,4 @@
-﻿namespace REtry
+﻿namespace Resiliency
 {
     public abstract class RetryInfo
     {

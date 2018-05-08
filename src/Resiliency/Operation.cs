@@ -2,9 +2,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace REtry
+namespace Resiliency
 {
-    public static class Operation
+    public static class ResilientOperation
     {
         public static ResilientOperationBuilder<Func<CancellationToken, Task>> From(Func<CancellationToken, Task> operation)
         {

@@ -1,7 +1,7 @@
 using System;
 using Xunit;
 
-namespace REtry.Tests
+namespace Resiliency.Tests
 {
     using System.Threading;
     using System.Threading.Tasks;
@@ -10,14 +10,14 @@ namespace REtry.Tests
     {
         public RetriesAreExhaustedTests()
         {
-            Operation.WaiterFactory = (cancellationToken) => new FakeWaiter(cancellationToken);
+            ResilientOperation.WaiterFactory = (cancellationToken) => new FakeWaiter(cancellationToken);
         }
 
         [Fact]
         public async Task ThrowsOnceRetryHandlersAreExhausted()
         {
-            var resilientOperation = Operation.From(() => throw new Exception())
-                .WhenExceptionIs<Exception>(async (retry, ex) =>
+            var resilientOperation = ResilientOperation.From(() => throw new Exception())
+                .RetryWhenExceptionIs<Exception>(async (retry, ex) =>
                 {
                     if (retry.Total.AttemptsExhausted < 3)
                     {
@@ -28,7 +28,7 @@ namespace REtry.Tests
 
                     return retry.Unhandled();
                 })
-                .GetResilientOperation();
+                .GetOperation();
 
             await Assert.ThrowsAsync<Exception>(async () => await resilientOperation(CancellationToken.None));
         }
@@ -39,8 +39,8 @@ namespace REtry.Tests
             Func<Task> asyncOperation = () => throw new Exception();
 
             var resilientOperation = asyncOperation
-                .Retry()
-                .WhenExceptionIs<Exception>(async (retry, ex) =>
+                .AsResilient()
+                .RetryWhenExceptionIs<Exception>(async (retry, ex) =>
                 {
                     if (retry.Total.AttemptsExhausted < 3)
                     {
@@ -51,7 +51,7 @@ namespace REtry.Tests
 
                     return retry.Unhandled();
                 })
-                .GetResilientOperation();
+                .GetOperation();
 
                 await Assert.ThrowsAsync<Exception>(async () => await resilientOperation(CancellationToken.None));
         }
