@@ -5,51 +5,22 @@ using System.Threading.Tasks;
 
 namespace REtry
 {
-    public class RetryOperationBuilder<TOperation>
+    public class ResilientOperationBuilder<TOperation>
     {
         private RetryTotalInfo Total;
 
-        internal RetryOperationBuilder(TOperation operation)
+        internal ResilientOperationBuilder(TOperation operation)
         {
-            Handlers = new List<Func<Exception, Task<bool>>>();
+            Handlers = new List<Func<Exception, Task<RetryHandlerResult>>>();
             Total = new RetryTotalInfo();
             Operation = operation;
         }
 
-        private List<Func<Exception, Task<bool>>> Handlers { get; set; }
+        private List<Func<Exception, Task<RetryHandlerResult>>> Handlers { get; }
         private TOperation Operation { get; }
 
-        public RetryOperationBuilder<TOperation> WhenExceptionIs<TException>(Func<IRetryOperation, TException, Task<bool>> handler)
+        public ResilientOperationBuilder<TOperation> WhenExceptionIs<TException>(Func<RetryOperation, TException, Task<RetryHandlerResult>> handler)
             where TException : Exception
-        {
-            var info = new RetryHandlerInfo();
-
-            var operationInfo = Retry.RetryOperationFactory(info, Total);
-
-            Handlers.Add(async (ex) =>
-            {
-                bool didHandle = false;
-
-                if (ex is TException exception)
-                {
-                    didHandle = await handler(operationInfo, exception).ConfigureAwait(false);
-
-                    if (didHandle)
-                    {
-                        operationInfo.Handler.AttemptsExhausted++;
-                        operationInfo.Total.AttemptsExhausted++;
-                    }
-
-                    return didHandle;
-                }
-
-                return didHandle;
-            });
-
-            return this;
-        }
-
-        public RetryOperationBuilder<TOperation> When(Func<Exception, bool> condition, Func<IRetryOperation, Exception, Task<bool>> handler)
         {
             var info = new RetryHandlerInfo();
 
@@ -57,28 +28,59 @@ namespace REtry
 
             Handlers.Add(async (ex) =>
             {
-                bool didHandle = false;
+                var handlerResult = RetryHandlerResult.Unhandled;
 
-                if (condition(ex))
+                if (ex is TException exception)
                 {
-                    didHandle = await handler(operationInfo, ex).ConfigureAwait(false);
+                    handlerResult = await handler(operationInfo, exception).ConfigureAwait(false);
 
-                    if (didHandle)
+                    switch (handlerResult)
                     {
-                        operationInfo.Handler.AttemptsExhausted++;
-                        operationInfo.Total.AttemptsExhausted++;
+                        case RetryHandlerResult.Handled:
+                            operationInfo.Handler.AttemptsExhausted++;
+                            operationInfo.Total.AttemptsExhausted++;
+                            break;
                     }
-
-                    return didHandle;
                 }
 
-                return didHandle;
+                return handlerResult;
             });
 
             return this;
         }
 
-        public Func<CancellationToken, Task> GetRetryableOperation()
+        public ResilientOperationBuilder<TOperation> When(
+            Func<Exception, bool> condition,
+            Func<RetryOperation, Exception, Task<RetryHandlerResult>> handler)
+        {
+            var info = new RetryHandlerInfo();
+
+            var operationInfo = new RetryOperation(info, Total);
+
+            Handlers.Add(async (ex) =>
+            {
+                RetryHandlerResult handlerResult = RetryHandlerResult.Unhandled;
+
+                if (condition(ex))
+                {
+                    handlerResult = await handler(operationInfo, ex).ConfigureAwait(false);
+
+                    switch (handlerResult)
+                    {
+                        case RetryHandlerResult.Handled:
+                            operationInfo.Handler.AttemptsExhausted++;
+                            operationInfo.Total.AttemptsExhausted++;
+                            break;
+                    }
+                }
+
+                return handlerResult;
+            });
+
+            return this;
+        }
+
+        public Func<CancellationToken, Task> GetResilientOperation()
         {
             return Invoke;
         }
@@ -104,17 +106,20 @@ namespace REtry
                 }
                 catch (Exception ex)
                 {
-                    bool wasHandled = false;
+                    RetryHandlerResult handlerResult = RetryHandlerResult.Unhandled;
 
                     foreach (var handler in Handlers)
                     {
                         if (cancellationToken.IsCancellationRequested)
                             break;
 
-                        wasHandled = await handler(ex).ConfigureAwait(false);
+                        handlerResult = await handler(ex).ConfigureAwait(false);
+
+                        if (handlerResult == RetryHandlerResult.Cancelled)
+                            break;
                     }
 
-                    if (!wasHandled)
+                    if (handlerResult != RetryHandlerResult.Handled)
                         throw;
                 }
             }

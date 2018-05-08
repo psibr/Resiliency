@@ -4,8 +4,7 @@ using System.Threading.Tasks;
 
 namespace REtry
 {
-    public class RetryOperation 
-        : IRetryOperation
+    public class RetryOperation
     {
         public RetryOperation(RetryHandlerInfo handler, RetryTotalInfo total)
         {
@@ -18,11 +17,5 @@ namespace REtry
         public RetryTotalInfo Total { get; }
 
         public CancellationToken CancellationToken { get; }
-
-        public Task Wait(TimeSpan period) =>
-            Task.Delay(period);
-
-        public Task Wait(int milliseconds) =>
-            Task.Delay(milliseconds);
     }
 }
