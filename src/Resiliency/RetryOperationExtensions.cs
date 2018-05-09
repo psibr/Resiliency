@@ -18,11 +18,4 @@ namespace Resiliency
         public static Task WaitAsync(this RetryOperation retry, TimeSpan period) => 
             ResilientOperation.WaiterFactory(retry.CancellationToken).WaitAsync(period);
     }
-
-    public enum RetryHandlerResult
-    {
-        Unhandled = 0,
-        Handled = 1,
-        Cancelled = 2
-    }
 }
