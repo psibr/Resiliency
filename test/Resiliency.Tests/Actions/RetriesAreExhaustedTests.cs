@@ -1,7 +1,7 @@
 using System;
 using Xunit;
 
-namespace Resiliency.Tests
+namespace Resiliency.Tests.Actions
 {
     using System.Threading;
     using System.Threading.Tasks;
