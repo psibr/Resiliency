@@ -1,2 +1,2 @@
 # Resiliency for .NET
-A generalized resiliency library that is simple to use and expand upon.
+A comprehensive, opinionated, and function-first resiliency library for C# and the broader .NET ecosystem.
