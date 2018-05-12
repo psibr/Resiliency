@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Resiliency
 {
-    public static class ResilientOperation
+    public partial class ResilientOperation
     {
         /// <summary>
         /// Create a <see cref="ResilientActionBuilder{TAction}"/> from an existing async action with cancellation support. 
@@ -72,5 +72,20 @@ namespace Resiliency
         {
             return new ResilientFunctionBuilder<Func<TResult>, TResult>(function);
         }
+    }
+
+    public partial class ResilientOperation
+    {
+        public ResilientOperation(ResilientOperationHandlerInfo handler, ResilientOperationTotalInfo total)
+        {
+            Handler = handler;
+            Total = total;
+        }
+
+        public ResilientOperationHandlerInfo Handler { get; }
+
+        public ResilientOperationTotalInfo Total { get; }
+
+        public CancellationToken CancellationToken { get; }
     }
 }

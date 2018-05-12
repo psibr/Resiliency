@@ -5,17 +5,17 @@ namespace Resiliency
 {
     public static class RetryOperationExtensions
     {
-        public static RetryHandlerResult Handled(this RetryOperation retry)
+        public static HandlerResult Handled(this ResilientOperation resilientOperation)
         {
-            if (retry.CancellationToken.IsCancellationRequested)
-                return RetryHandlerResult.Cancelled;
+            if (resilientOperation.CancellationToken.IsCancellationRequested)
+                return HandlerResult.Cancelled;
 
-            return RetryHandlerResult.Handled;
+            return HandlerResult.Handled;
         }
 
-        public static RetryHandlerResult Unhandled(this RetryOperation retry) => RetryHandlerResult.Unhandled;
+        public static HandlerResult Unhandled(this ResilientOperation retry) => HandlerResult.Unhandled;
 
-        public static Task WaitAsync(this RetryOperation retry, TimeSpan period) => 
+        public static Task WaitAsync(this ResilientOperation retry, TimeSpan period) => 
             ResilientOperation.WaiterFactory(retry.CancellationToken).WaitAsync(period);
     }
 }
