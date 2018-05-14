@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Resiliency
 {
-    public static class RetryOperationExtensions
+    public static class ResilientOperationExtensions
     {
         public static HandlerResult Handled(this ResilientOperation resilientOperation)
         {
