@@ -16,7 +16,7 @@ namespace Resiliency
         {
             // Add an implicit operation circuit breaker that must be explicitly tripped.
             // This is comonly used for 429 and 503 style exceptions where you KNOW you have been throttled.
-            WithCircuitBreaker(ImplicitOperationKey, () => new CircuitBreaker(new ExplicitCircuitBreakerStrategy()));
+            WithCircuitBreaker(ImplicitOperationKey, () => new CircuitBreaker(new ExplicitTripCircuitBreakerStrategy()));
         }
 
         public new ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
