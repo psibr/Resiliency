@@ -24,16 +24,16 @@ namespace Resiliency.Tests.Actions
 
             var resilientOperation = ResilientOperation.From(() => Task.Delay(100))
                 .TimeoutAfter(TimeSpan.FromMilliseconds(20))
-                .RetryWhenExceptionIs<TimeoutException>((retry, ex) =>
+                .WhenExceptionIs<TimeoutException>((op, ex) =>
                 {
-                    if (retry.Total.AttemptsExhausted == 0)
+                    if (op.Total.AttemptsExhausted == 0)
                     {
                         retryWasHit = true;
 
-                        return Task.FromResult(retry.Handled());
+                        return Task.FromResult(op.Handled());
                     }
 
-                    return Task.FromResult(retry.Unhandled());
+                    return Task.FromResult(op.Unhandled());
                 })
                 .GetOperation();
 

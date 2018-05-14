@@ -29,18 +29,19 @@ namespace Resiliency.Tests.Functions
 
                     return 42;
                 })
-                .RetryWhenExceptionIs<Exception>(async (retry, ex) =>
+                .WhenExceptionIs<Exception>(async (op, ex) =>
                 {
-                    if (retry.Total.AttemptsExhausted < 3)
+                    if (op.Total.AttemptsExhausted < 3)
                     {
-                        await retry.WaitAsync(TimeSpan.FromMilliseconds(100));
+                        await op.WaitAsync(TimeSpan.FromMilliseconds(100));
 
-                        return retry.Handled();
+                        return op.Handled();
                     }
 
-                    return retry.Unhandled();
+                    return op.Unhandled();
                 })
                 .GetOperation();
+
 
             Assert.Equal(42, await resilientOperation(CancellationToken.None));
         }

@@ -1,6 +1,6 @@
 namespace Resiliency
 {
-    public enum RetryHandlerResult
+    public enum HandlerResult
     {
         Unhandled = 0,
         Handled = 1,
