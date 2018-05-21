@@ -104,11 +104,13 @@ namespace Resiliency
         public ResilientOperation(
             string implicitOperationKey,
             ResilientOperationHandlerInfo handler,
-            ResilientOperationTotalInfo total)
+            ResilientOperationTotalInfo total,
+            CancellationToken cancellationToken)
         {
             ImplicitOperationKey = implicitOperationKey;
             Handler = handler;
             Total = total;
+            CancellationToken = cancellationToken;
             DefaultCircuitBreaker = CircuitBreaker.GetCircuitBreaker(implicitOperationKey);
         }
 

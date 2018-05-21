@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ActionOperation = System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task>;
@@ -128,7 +129,7 @@ namespace Resiliency
                             {
                                 await operation(cancellationToken).ConfigureAwait(false);
                             }
-                            catch(Exception ex) when (!(ex is CircuitBrokenException))
+                            catch (Exception ex) when (!(ex is CircuitBrokenException))
                             {
                                 circuitBreaker.OnFailure(ex);
 
@@ -165,6 +166,18 @@ namespace Resiliency
                 wrappedOperation = circuitBreakerHandler(wrappedOperation);
             }
 
+            var totalInfo = new ResilientOperationTotalInfo();
+
+            var partiallyAppliedHandlers = new List<Func<Exception, Task<HandlerResult>>>();
+
+            // Prepare handlers
+            foreach (var handler in Handlers)
+            {
+                var op = new ResilientOperation(ImplicitOperationKey, new ResilientOperationHandlerInfo(), totalInfo, cancellationToken);
+
+                partiallyAppliedHandlers.Add((ex) => handler(op, ex));
+            }
+
             do
             {
                 try
@@ -175,11 +188,11 @@ namespace Resiliency
                 {
                     try
                     {
-                        await ProcessHandlers(ex, cancellationToken);
+                        await ProcessHandlers(partiallyAppliedHandlers, ex, cancellationToken);
                     }
                     catch (CircuitBrokenException circuitBrokenEx)
                     {
-                        await ProcessHandlers(circuitBrokenEx, cancellationToken);
+                        await ProcessHandlers(partiallyAppliedHandlers, circuitBrokenEx, cancellationToken);
                     }
                 }
             }
