@@ -221,7 +221,7 @@ namespace Resiliency
             if (TimeoutPeriod != Timeout.InfiniteTimeSpan)
             {
                 var taskSet = new List<Task>();
-                Task delayTask = Task.Delay(TimeoutPeriod);
+                var delayTask = Task.Delay(TimeoutPeriod, timeoutOrCancelledToken);
                 taskSet.Add(delayTask);
 
                 var firstCompletedTask = await Task.WhenAny(taskSet).ConfigureAwait(false);

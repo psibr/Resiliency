@@ -209,13 +209,13 @@ namespace Resiliency
             switch (Operation)
             {
                 case Func<CancellationToken, Task> asyncCancellableOperation:
-                    operationTask = asyncCancellableOperation(cancellationToken);
+                    operationTask = asyncCancellableOperation(timeoutOrCancelledToken);
                     break;
                 case Func<Task> asyncOperation:
                     operationTask = asyncOperation();
                     break;
                 case Action syncOperation:
-                    operationTask = Task.Run(() => syncOperation());
+                    operationTask = Task.Run(() => syncOperation(), timeoutOrCancelledToken);
                     break;
                 default:
                     throw new NotSupportedException($"Operation of type {Operation.GetType()}");
@@ -224,7 +224,7 @@ namespace Resiliency
             if (TimeoutPeriod != Timeout.InfiniteTimeSpan)
             {
                 var taskSet = new List<Task>();
-                Task delayTask = Task.Delay(TimeoutPeriod);
+                var delayTask = Task.Delay(TimeoutPeriod, timeoutOrCancelledToken);
                 taskSet.Add(delayTask);
 
                 var firstCompletedTask = await Task.WhenAny(taskSet).ConfigureAwait(false);

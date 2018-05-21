@@ -12,16 +12,16 @@ namespace Resiliency
     public class TaskDelayWaiter
         : IWaiter
     {
-        private readonly CancellationToken cancellationToken;
+        private readonly CancellationToken _cancellationToken;
 
         public TaskDelayWaiter(CancellationToken cancellationToken = default)
         {
-            this.cancellationToken = cancellationToken;
+            _cancellationToken = cancellationToken;
         }
 
         public Task WaitAsync(TimeSpan period)
         {
-            return Task.Delay(period, cancellationToken);
+            return Task.Delay(period, _cancellationToken);
         }
     }
 }
