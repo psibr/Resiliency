@@ -21,12 +21,8 @@ namespace Resiliency.Tests.Actions
                 {
                     if (op.Total.AttemptsExhausted < 3)
                     {
-                        await op.WaitAsync(TimeSpan.FromMilliseconds(100));
-
-                        return op.Handled();
+                        await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
                     }
-
-                    return op.Unhandled();
                 })
                 .GetOperation();
 
@@ -44,12 +40,8 @@ namespace Resiliency.Tests.Actions
                 {
                     if (op.Total.AttemptsExhausted < 3)
                     {
-                        await op.WaitAsync(TimeSpan.FromMilliseconds(100));
-
-                        return op.Handled();
+                        await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
                     }
-
-                    return op.Unhandled();
                 })
                 .GetOperation();
 

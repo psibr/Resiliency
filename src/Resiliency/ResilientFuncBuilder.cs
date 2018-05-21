@@ -20,7 +20,7 @@ namespace Resiliency
         }
 
         public new ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
-            Func<ResilientOperation, TException, Task<HandlerResult>> handler)
+            Func<ResilientOperation, TException, Task> handler)
             where TException : Exception
         {
             base.WhenExceptionIs(handler);
@@ -30,7 +30,7 @@ namespace Resiliency
 
         public new ResilientFuncBuilder<TFunc, TResult> When(
             Func<Exception, bool> condition,
-            Func<ResilientOperation, Exception, Task<HandlerResult>> handler)
+            Func<ResilientOperation, Exception, Task> handler)
         {
             base.When(condition, handler);
 
@@ -198,18 +198,21 @@ namespace Resiliency
 
         private async Task<TResult> ExecuteFunc(CancellationToken cancellationToken)
         {
+            var timeoutInclusiveCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var timeoutOrCancelledToken = timeoutInclusiveCancellationSource.Token;
+
             Task<TResult> operationTask;
 
             switch (Operation)
             {
                 case Func<CancellationToken, Task<TResult>> asyncCancellableOperation:
-                    operationTask = asyncCancellableOperation(cancellationToken);
+                    operationTask = asyncCancellableOperation(timeoutOrCancelledToken);
                     break;
                 case Func<Task<TResult>> asyncOperation:
                     operationTask = asyncOperation();
                     break;
                 case Func<TResult> syncOperation:
-                    operationTask = Task.Run(() => syncOperation());
+                    operationTask = Task.Run(() => syncOperation(), timeoutOrCancelledToken);
                     break;
                 default:
                     throw new NotSupportedException($"Operation of type {Operation.GetType()}");
@@ -224,7 +227,12 @@ namespace Resiliency
                 var firstCompletedTask = await Task.WhenAny(taskSet).ConfigureAwait(false);
 
                 if (firstCompletedTask != operationTask)
+                {
+                    // Signal cancellation as a best practice to end the actual operation, but don't wait or observe it.
+                    timeoutInclusiveCancellationSource.Cancel();
+
                     throw new TimeoutException();
+                }
 
                 return operationTask.Result;
             }

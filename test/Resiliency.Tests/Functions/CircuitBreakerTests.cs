@@ -1,22 +1,25 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Resiliency.Tests.Functions
 {
-    using System.Threading;
-    using System.Threading.Tasks;
-
-    public class RetriesAreExhaustedTests
+    public class CircuitBreakerTests
     {
-        public RetriesAreExhaustedTests()
+
+        public CircuitBreakerTests()
         {
             ResilientOperation.WaiterFactory = (cancellationToken) => new FakeWaiter(cancellationToken);
         }
 
         [Fact]
-        public async Task ThrowsOnceRetryHandlersAreExhausted()
+        public async Task ExplicitTripWorks()
         {
-            var resilientOperation = ResilientOperation.From(() =>
+            var resilientOperation = ResilientOperation
+                .From(() =>
                 {
                     throw new Exception();
 
@@ -30,26 +33,31 @@ namespace Resiliency.Tests.Functions
                     {
                         await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
                     }
+                    else
+                    {
+                        op.DefaultCircuitBreaker.Trip(ex, TimeSpan.FromDays(1));
+                    }
                 })
                 .GetOperation();
 
-            await Assert.ThrowsAsync<Exception>(async () => await resilientOperation(CancellationToken.None));
+            await Assert.ThrowsAsync<CircuitBrokenException>(async () => await resilientOperation(CancellationToken.None));
         }
 
         [Fact]
-        public async Task ExtensionThrowsOnceRetryHandlersAreExhausted()
+        public async Task CircuitBreaksAfterConsecutiveFailures()
         {
-            Func<Task<int>> asyncOperation = () =>
-            {
-                throw new Exception();
+            var resilientOperation = ResilientOperation
+                .From(() =>
+                {
+                    throw new Exception();
 
 #pragma warning disable CS0162 // Unreachable code detected
-                return Task.FromResult(42);
+                    return Task.FromResult(42);
 #pragma warning restore CS0162 // Unreachable code detected
-            };
-
-            var resilientOperation = asyncOperation
-                .AsResilient()
+                })
+                .WithCircuitBreaker(
+                    operationKey: nameof(CircuitBreaksAfterConsecutiveFailures),
+                    onMissingFactory: () => new CircuitBreaker(new ConsecutiveFailureCircuitBreakerStrategy(3)))
                 .WhenExceptionIs<Exception>(async (op, ex) =>
                 {
                     if (op.Total.AttemptsExhausted < 3)
@@ -59,7 +67,7 @@ namespace Resiliency.Tests.Functions
                 })
                 .GetOperation();
 
-                await Assert.ThrowsAsync<Exception>(async () => await resilientOperation(CancellationToken.None));
+            await Assert.ThrowsAsync<CircuitBrokenException>(async () => await resilientOperation(CancellationToken.None));
         }
     }
 }

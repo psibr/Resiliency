@@ -5,17 +5,14 @@ namespace Resiliency
 {
     public static class ResilientOperationExtensions
     {
-        public static HandlerResult Handled(this ResilientOperation resilientOperation)
+        public static Task WaitAsync(this ResilientOperation op, TimeSpan period) => 
+            ResilientOperation.WaiterFactory(op.CancellationToken).WaitAsync(period);
+
+        public static async Task WaitThenRetryAsync(this ResilientOperation op, TimeSpan period)
         {
-            if (resilientOperation.CancellationToken.IsCancellationRequested)
-                return HandlerResult.Cancelled;
+            await op.WaitAsync(period).ConfigureAwait(false);
 
-            return HandlerResult.Handled;
+            op.Retry();
         }
-
-        public static HandlerResult Unhandled(this ResilientOperation retry) => HandlerResult.Unhandled;
-
-        public static Task WaitAsync(this ResilientOperation retry, TimeSpan period) => 
-            ResilientOperation.WaiterFactory(retry.CancellationToken).WaitAsync(period);
     }
 }

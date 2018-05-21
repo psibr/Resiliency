@@ -24,7 +24,7 @@ namespace Resiliency
         }
 
         public new ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
-            Func<ResilientOperation, TException, Task<HandlerResult>> handler)
+            Func<ResilientOperation, TException, Task> handler)
             where TException : Exception
         {
             base.WhenExceptionIs(handler);
@@ -34,7 +34,7 @@ namespace Resiliency
 
         public new ResilientActionBuilder<TAction> When(
             Func<Exception, bool> condition,
-            Func<ResilientOperation, Exception, Task<HandlerResult>> handler)
+            Func<ResilientOperation, Exception, Task> handler)
         {
             base.When(condition, handler);
 
@@ -201,6 +201,9 @@ namespace Resiliency
 
         protected virtual async Task ExecuteAction(CancellationToken cancellationToken)
         {
+            var timeoutInclusiveCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var timeoutOrCancelledToken = timeoutInclusiveCancellationSource.Token;
+
             Task operationTask;
 
             switch (Operation)
@@ -227,7 +230,12 @@ namespace Resiliency
                 var firstCompletedTask = await Task.WhenAny(taskSet).ConfigureAwait(false);
 
                 if (firstCompletedTask != operationTask)
+                {
+                    // Signal cancellation as a best practice to end the actual operation, but don't wait or observe it.
+                    timeoutInclusiveCancellationSource.Cancel();
+
                     throw new TimeoutException();
+                }
             }
             else
             {

@@ -123,5 +123,17 @@ namespace Resiliency
         public CancellationToken CancellationToken { get; }
 
         public CircuitBreaker DefaultCircuitBreaker { get; }
+
+        internal HandlerResult Result { get; set; }
+
+        public void Retry()
+        {
+            Result = HandlerResult.Handled;
+        }
+
+        public void Cancel()
+        {
+            Result = HandlerResult.Cancelled;
+        }
     }
 }

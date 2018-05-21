@@ -28,52 +28,48 @@ namespace Resiliency
         }
 
         protected void WhenExceptionIs<TException>(
-            Func<ResilientOperation, TException, Task<HandlerResult>> handler)
+            Func<ResilientOperation, TException, Task> handler)
             where TException : Exception
         {
             Handlers.Add(async (op, ex) =>
             {
-                var handlerResult = HandlerResult.Unhandled;
+                op.Result = HandlerResult.Unhandled;
 
                 if (ex is TException exception)
                 {
-                    handlerResult = await handler(op, exception).ConfigureAwait(false);
+                    await handler(op, exception).ConfigureAwait(false);
 
-                    switch (handlerResult)
+                    if (op.Result == HandlerResult.Handled)
                     {
-                        case HandlerResult.Handled:
-                            op.Handler.AttemptsExhausted++;
-                            op.Total.AttemptsExhausted++;
-                            break;
+                        op.Handler.AttemptsExhausted++;
+                        op.Total.AttemptsExhausted++;
                     }
                 }
 
-                return handlerResult;
+                return op.Result;
             });
         }
 
         protected void When(
             Func<Exception, bool> condition,
-            Func<ResilientOperation, Exception, Task<HandlerResult>> handler)
+            Func<ResilientOperation, Exception, Task> handler)
         {
             Handlers.Add(async (op, ex) =>
             {
-                HandlerResult handlerResult = HandlerResult.Unhandled;
+                op.Result = HandlerResult.Unhandled;
 
                 if (condition(ex))
                 {
-                    handlerResult = await handler(op, ex).ConfigureAwait(false);
+                    await handler(op, ex).ConfigureAwait(false);
 
-                    switch (handlerResult)
+                    if (op.Result == HandlerResult.Handled)
                     {
-                        case HandlerResult.Handled:
-                            op.Handler.AttemptsExhausted++;
-                            op.Total.AttemptsExhausted++;
-                            break;
+                        op.Handler.AttemptsExhausted++;
+                        op.Total.AttemptsExhausted++;
                     }
                 }
 
-                return handlerResult;
+                return op.Result;
             });
         }
 

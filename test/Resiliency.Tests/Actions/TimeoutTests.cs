@@ -30,10 +30,10 @@ namespace Resiliency.Tests.Actions
                     {
                         retryWasHit = true;
 
-                        return Task.FromResult(op.Handled());
+                        op.Retry();
                     }
 
-                    return Task.FromResult(op.Unhandled());
+                    return Task.CompletedTask;
                 })
                 .GetOperation();
 
