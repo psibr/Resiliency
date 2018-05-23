@@ -31,41 +31,29 @@ namespace Resiliency
             Func<ResilientOperation, TException, Task> handler)
             where TException : Exception
         {
+            WhenExceptionIs(ex => true, handler);
+        }
+
+        protected void WhenExceptionIs<TException>(
+            Func<TException, bool> condition,
+            Func<ResilientOperation, TException, Task> handler)
+            where TException : Exception
+        {
             Handlers.Add(async (op, ex) =>
             {
                 op.Result = HandlerResult.Unhandled;
 
                 if (ex is TException exception)
                 {
-                    await handler(op, exception).ConfigureAwait(false);
-
-                    if (op.Result == HandlerResult.Handled)
+                    if (condition(exception))
                     {
-                        op.Handler.AttemptsExhausted++;
-                        op.Total.AttemptsExhausted++;
-                    }
-                }
+                        await handler(op, exception).ConfigureAwait(false);
 
-                return op.Result;
-            });
-        }
-
-        protected void When(
-            Func<Exception, bool> condition,
-            Func<ResilientOperation, Exception, Task> handler)
-        {
-            Handlers.Add(async (op, ex) =>
-            {
-                op.Result = HandlerResult.Unhandled;
-
-                if (condition(ex))
-                {
-                    await handler(op, ex).ConfigureAwait(false);
-
-                    if (op.Result == HandlerResult.Handled)
-                    {
-                        op.Handler.AttemptsExhausted++;
-                        op.Total.AttemptsExhausted++;
+                        if (op.Result == HandlerResult.Handled)
+                        {
+                            op.Handler.AttemptsExhausted++;
+                            op.Total.AttemptsExhausted++;
+                        }
                     }
                 }
 

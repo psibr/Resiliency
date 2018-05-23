@@ -14,10 +14,14 @@ namespace Resiliency
         internal ResilientFuncBuilder(TFunc function, int sourceLineNumber, string sourceFilePath, string memberName)
             : base(function, sourceLineNumber, sourceFilePath, memberName)
         {
+            ResultHandlers = new List<Func<ResilientOperation, TResult, Task<HandlerResult>>>();
+
             // Add an implicit operation circuit breaker that must be explicitly tripped.
             // This is comonly used for 429 and 503 style exceptions where you KNOW you have been throttled.
             WithCircuitBreaker(ImplicitOperationKey, () => new CircuitBreaker(new ExplicitTripCircuitBreakerStrategy()));
         }
+
+        protected List<Func<ResilientOperation, TResult, Task<HandlerResult>>> ResultHandlers { get; }
 
         public new ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
             Func<ResilientOperation, TException, Task> handler)
@@ -28,11 +32,37 @@ namespace Resiliency
             return this;
         }
 
-        public new ResilientFuncBuilder<TFunc, TResult> When(
-            Func<Exception, bool> condition,
-            Func<ResilientOperation, Exception, Task> handler)
+        public new ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
+            Func<TException, bool> condition,
+            Func<ResilientOperation, TException, Task> handler)
+            where TException : Exception
         {
-            base.When(condition, handler);
+            base.WhenExceptionIs(condition, handler);
+
+            return this;
+        }
+
+        public ResilientFuncBuilder<TFunc, TResult> WhenResult(
+            Func<TResult, bool> condition,
+            Func<ResilientOperation, TResult, Task> handler)
+        {
+            ResultHandlers.Add(async (op, result) =>
+            {
+                op.Result = HandlerResult.Unhandled;
+
+                if (condition(result))
+                {
+                    await handler(op, result).ConfigureAwait(false);
+
+                    if (op.Result == HandlerResult.Handled)
+                    {
+                        op.Handler.AttemptsExhausted++;
+                        op.Total.AttemptsExhausted++;
+                    }
+                }
+
+                return op.Result;
+            });
 
             return this;
         }
@@ -165,6 +195,16 @@ namespace Resiliency
 
             var totalInfo = new ResilientOperationTotalInfo();
 
+            var partiallyAppliedResultHandlers = new List<Func<TResult, Task<HandlerResult>>>();
+
+            // Prepare handlers
+            foreach (var handler in ResultHandlers)
+            {
+                var op = new ResilientOperation(ImplicitOperationKey, new ResilientOperationHandlerInfo(), totalInfo, cancellationToken);
+
+                partiallyAppliedResultHandlers.Add(result => handler(op, result));
+            }
+
             var partiallyAppliedHandlers = new List<Func<Exception, Task<HandlerResult>>>();
 
             // Prepare handlers
@@ -179,7 +219,22 @@ namespace Resiliency
             {
                 try
                 {
-                    return await wrappedOperation(cancellationToken);
+                    var result = await wrappedOperation(cancellationToken);
+
+                    var handlerResult = HandlerResult.Unhandled;
+
+                    foreach (var handler in partiallyAppliedResultHandlers)
+                    {
+                        if (cancellationToken.IsCancellationRequested)
+                            break;
+
+                        handlerResult = await handler(result).ConfigureAwait(false);
+                    }
+
+                    if(handlerResult == HandlerResult.Handled)
+                        continue;
+
+                    return result;
                 }
                 catch (Exception ex)
                 {

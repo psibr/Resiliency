@@ -26,6 +26,12 @@ namespace Resiliency.Tests.Functions
                         failureCount++;
                         throw new Exception();
                     }
+                    
+                    if (failureCount < 4)
+                    {
+                        failureCount++;
+                        return 5;
+                    }
 
                     return 42;
                 })
@@ -35,6 +41,10 @@ namespace Resiliency.Tests.Functions
                     {
                         await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
                     }
+                })
+                .WhenResult(i => i < 42, async (op, i) =>
+                {
+                    await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
                 })
                 .GetOperation();
 

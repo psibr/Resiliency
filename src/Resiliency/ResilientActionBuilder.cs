@@ -32,11 +32,12 @@ namespace Resiliency
             return this;
         }
 
-        public new ResilientActionBuilder<TAction> When(
-            Func<Exception, bool> condition,
-            Func<ResilientOperation, Exception, Task> handler)
+        public new ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
+            Func<TException, bool> condition,
+            Func<ResilientOperation, TException, Task> handler)
+            where TException : Exception
         {
-            base.When(condition, handler);
+            base.WhenExceptionIs(condition, handler);
 
             return this;
         }
