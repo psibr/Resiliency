@@ -2,6 +2,9 @@ using System;
 
 namespace Resiliency.BackoffStrategies
 {
+    /// <summary>
+    /// An <see cref="IBackoffStrategy"/> that always returns the same wait time.
+    /// </summary>
     public class ConstantBackoffStrategy : IBackoffStrategy
     {
         public ConstantBackoffStrategy(TimeSpan initialWaitTime)

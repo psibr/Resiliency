@@ -2,6 +2,9 @@ using System;
 
 namespace Resiliency.BackoffStrategies
 {
+    /// <summary>
+    /// An <see cref="IBackoffStrategy"/> that restricts the wait time of an <see cref="IBackoffStrategy"/> to a given maximum value.
+    /// </summary>
     public class CappedBackoffStrategy : IBackoffStrategy
     {
         private readonly IBackoffStrategy _strategy;

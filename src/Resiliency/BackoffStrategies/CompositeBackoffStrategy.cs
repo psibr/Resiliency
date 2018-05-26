@@ -4,6 +4,9 @@ using System.Linq;
 
 namespace Resiliency.BackoffStrategies
 {
+    /// <summary>
+    /// An <see cref="IBackoffStrategy"/> that runs multiple <see cref="IBackoffStrategy"/>s and uses a given selector to choose a resulting wait time.
+    /// </summary>
     public class CompositeBackoffStrategy : IBackoffStrategy
     {
         public IEnumerable<IBackoffStrategy> _strategies;

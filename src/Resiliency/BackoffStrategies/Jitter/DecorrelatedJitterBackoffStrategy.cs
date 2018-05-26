@@ -2,6 +2,11 @@ using System;
 
 namespace Resiliency.BackoffStrategies.Jitter
 {
+    /// <summary>
+    /// Adds a randomized offset to the wait time of an <see cref="IBackoffStrategy"/> based on the given last wait time.
+    /// <para/>
+    /// Ranges from the wait time given by the underlying strategy up to 3 times the last given wait time.
+    /// </summary>
     public class DecorrelatedJitterBackoffStrategy : IBackoffStrategy
     {
         private readonly IBackoffStrategy _strategy;
@@ -25,7 +30,9 @@ namespace Resiliency.BackoffStrategies.Jitter
             if (attemptNumber < 1)
                 throw new ArgumentException($"The number of attempts cannot be less than 1 when getting the wait time of an {nameof(IBackoffStrategy)}.", nameof(attemptNumber));
 
-            var waitTimeMs = _randomNumberGenerator.NextDouble() * (_lastWaitTime.TotalMilliseconds * 3 - _strategy.InitialWaitTime.TotalMilliseconds) + _strategy.InitialWaitTime.TotalMilliseconds;
+            var waitTimeMs = 
+                _randomNumberGenerator.NextDouble() * (_lastWaitTime.TotalMilliseconds * 3 - _strategy.InitialWaitTime.TotalMilliseconds) 
+                + _strategy.InitialWaitTime.TotalMilliseconds;
 
             return TimeSpan.FromMilliseconds(waitTimeMs);
         }

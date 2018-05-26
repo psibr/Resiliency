@@ -2,6 +2,11 @@ using System;
 
 namespace Resiliency.BackoffStrategies.Jitter
 {
+    /// <summary>
+    /// Adds a randomized offset to the wait time of an <see cref="IBackoffStrategy"/> based on the underlying strategy's calculated wait time.
+    /// <para/>
+    /// Ranges from the calculated wait time to 1.5x the calculated wait time.
+    /// </summary>
     public class HalfJitterBackoffStrategy : IBackoffStrategy
     {
         private readonly IBackoffStrategy _strategy;

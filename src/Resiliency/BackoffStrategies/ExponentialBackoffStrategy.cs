@@ -2,6 +2,9 @@ using System;
 
 namespace Resiliency.BackoffStrategies
 {
+    /// <summary>
+    /// An <see cref="IBackoffStrategy"/> that returns a wait time that grows exponentialls with each attempt made.
+    /// </summary>
     public class ExponentialBackoffStrategy : IBackoffStrategy
     {
         public ExponentialBackoffStrategy(TimeSpan initialWaitTime) 

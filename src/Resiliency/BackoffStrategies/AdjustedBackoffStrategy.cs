@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Resiliency.BackoffStrategies
 {
+    /// <summary>
+    /// An <see cref="IBackoffStrategy"/> that offsets an <see cref="IBackoffStrategy"/> by a percentage of the wait time.
+    /// </summary>
     public class PercentageAdjustedBackoffStrategy : IBackoffStrategy
     {
         private readonly IBackoffStrategy _strategy;
@@ -30,6 +33,9 @@ namespace Resiliency.BackoffStrategies
         }
     }
 
+    /// <summary>
+    /// An <see cref="IBackoffStrategy"/> that offsets an <see cref="IBackoffStrategy"/ by a constant factor.
+    /// </summary>
     public class ConstantAdjustedBackoffStrategy : IBackoffStrategy
     {
         private readonly IBackoffStrategy _strategy;
