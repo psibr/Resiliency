@@ -22,8 +22,10 @@ namespace Resiliency.Tests.Functions
                 .From(() =>
                 {
                     throw new Exception();
-                    
+
+#pragma warning disable CS0162 // Unreachable code detected
                     return Task.FromResult(42);
+#pragma warning restore CS0162 // Unreachable code detected
                 })
                 .WhenExceptionIs<Exception>(async (op, ex) =>
                 {

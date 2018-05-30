@@ -56,8 +56,8 @@ namespace Resiliency
 
                     if (op.Result == HandlerResult.Handled)
                     {
-                        op.Handler.AttemptsExhausted++;
-                        op.Total.AttemptsExhausted++;
+                        op.Handler._attemptsExhausted++;
+                        op.Total._attemptsExhausted++;
                     }
                 }
 
