@@ -16,7 +16,7 @@ namespace Resiliency.Tests.BackoffStrategies
                 new ConstantBackoffStrategy(initialWaitTime)
                     .WithMaxWaitTime(cappedWaitTime);
                     
-            var waitTime = cappedStrategy.GetWaitTime(1);
+            var waitTime = cappedStrategy.Next();
 
             Assert.True(waitTime < cappedWaitTime);
         }
@@ -31,7 +31,7 @@ namespace Resiliency.Tests.BackoffStrategies
                 new ConstantBackoffStrategy(initialWaitTime)
                     .WithMaxWaitTime(cappedWaitTime);
                     
-            var waitTime = cappedStrategy.GetWaitTime(1);
+            var waitTime = cappedStrategy.Next();
 
             Assert.Equal(cappedWaitTime, waitTime);
         }

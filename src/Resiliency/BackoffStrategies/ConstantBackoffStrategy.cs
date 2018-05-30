@@ -5,19 +5,20 @@ namespace Resiliency.BackoffStrategies
     /// <summary>
     /// An <see cref="IBackoffStrategy"/> that always returns the same wait time.
     /// </summary>
-    public class ConstantBackoffStrategy : IBackoffStrategy
+    public class ConstantBackoffStrategy 
+        : IBackoffStrategy
     {
-        public ConstantBackoffStrategy(TimeSpan initialWaitTime)
+        public ConstantBackoffStrategy(TimeSpan waitTime)
         {
-            if (initialWaitTime < TimeSpan.Zero)
-                throw new ArgumentException("The initial wait time cannot be less than zero.", nameof(initialWaitTime));
+            if (waitTime < TimeSpan.Zero)
+                throw new ArgumentException("The initial wait time cannot be less than zero.", nameof(waitTime));
 
-            InitialWaitTime = initialWaitTime;
+            InitialWaitTime = waitTime;
         }
 
         public TimeSpan InitialWaitTime { get; }
 
-        public TimeSpan GetWaitTime(int attemptNumber)
+        public TimeSpan Next()
         {
             return InitialWaitTime;
         }

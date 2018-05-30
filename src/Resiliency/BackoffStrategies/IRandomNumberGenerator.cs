@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 
 namespace Resiliency.BackoffStrategies
@@ -7,6 +8,7 @@ namespace Resiliency.BackoffStrategies
     /// <summary>
     /// TODO: Improve documentation.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public interface IRandomNumberGenerator
     {
         /// <summary>
@@ -25,12 +27,17 @@ namespace Resiliency.BackoffStrategies
         int Next(int minValue, int maxValue);
 
         /// <summary>
+        /// Non-negative double in [minValue, maxValue)
+        /// </summary>
+        double Next(double minValue, double maxValue);
+
+        /// <summary>
         /// Fills given array with random bytes.
         /// </summary>
         void NextBytes(byte[] buffer);
 
         /// <summary>
-        /// returns floating-point between [0, 1)
+        /// Returns floating-point between [0, 1)
         /// </summary>
         /// <returns></returns>
         double NextDouble();

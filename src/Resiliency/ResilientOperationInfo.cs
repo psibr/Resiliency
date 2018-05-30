@@ -1,17 +1,23 @@
 ﻿namespace Resiliency
 {
-    public abstract class ResilientOperationInfo
+    public interface IResilientOperationInfo
     {
-        public int AttemptsExhausted { get; internal set; }
+        int CurrentAttempt { get; }
     }
 
     public class ResilientOperationHandlerInfo
-        : ResilientOperationInfo
+        : IResilientOperationInfo
     {
+        internal int _attemptsExhausted = 0;
+
+        public int CurrentAttempt { get => _attemptsExhausted + 1; }
     }
 
     public class ResilientOperationTotalInfo
-        : ResilientOperationInfo
+        : IResilientOperationInfo
     {
+        internal int _attemptsExhausted = 0;
+
+        public int CurrentAttempt { get => _attemptsExhausted + 1; }
     }
 }

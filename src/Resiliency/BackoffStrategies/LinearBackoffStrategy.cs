@@ -5,8 +5,11 @@ namespace Resiliency.BackoffStrategies
     /// <summary>
     /// An <see cref="IBackoffStrategy"/> that returns a wait time that increases linearly with each attempt made.
     /// </summary>
-    public class LinearBackoffStrategy : IBackoffStrategy
+    public class LinearBackoffStrategy 
+        : IBackoffStrategy
     {
+        private int _attemptNumber;
+
         public LinearBackoffStrategy(TimeSpan initialWaitTime)
         {
             if (initialWaitTime < TimeSpan.Zero)
@@ -17,12 +20,9 @@ namespace Resiliency.BackoffStrategies
 
         public TimeSpan InitialWaitTime { get; }
 
-        public TimeSpan GetWaitTime(int attemptNumber)
+        public TimeSpan Next()
         {
-            if (attemptNumber < 1)
-                throw new ArgumentException($"The number of attempts cannot be less than 1 when getting the wait time of an {nameof(IBackoffStrategy)}.", nameof(attemptNumber));
-
-            return TimeSpan.FromTicks(InitialWaitTime.Ticks * attemptNumber);
+            return TimeSpan.FromTicks(InitialWaitTime.Ticks * ++_attemptNumber);
         }
     }
 }

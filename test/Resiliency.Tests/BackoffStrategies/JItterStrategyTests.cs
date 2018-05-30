@@ -13,6 +13,8 @@ namespace Resiliency.Tests.BackoffStrategies
             public int Next(int maxValue) => throw new NotImplementedException();
             public int Next(int minValue, int maxValue) => throw new NotImplementedException();
             public void NextBytes(byte[] buffer) => throw new NotImplementedException();
+            public double Next(double minValue, double maxValue)
+                => NextDouble() * (maxValue - minValue) + minValue;
 
             public double NextDouble() => 0;
         }
@@ -22,6 +24,10 @@ namespace Resiliency.Tests.BackoffStrategies
             public int Next() => throw new NotImplementedException();
             public int Next(int maxValue) => throw new NotImplementedException();
             public int Next(int minValue, int maxValue) => throw new NotImplementedException();
+
+            public double Next(double minValue, double maxValue)
+                => NextDouble() * (maxValue - minValue) + minValue;
+
             public void NextBytes(byte[] buffer) => throw new NotImplementedException();
 
             public double NextDouble() => .99999;
@@ -48,53 +54,48 @@ namespace Resiliency.Tests.BackoffStrategies
         public void FullJitterMinimuimWaitTimeIsTheWaitTime()
         {
             var strategyWithJitter = _constantStrategy.WithFullJitter(_minRandomNumberGenerator);
-            var attempts = 1;
 
-            var waitTime = strategyWithJitter.GetWaitTime(attempts);
+            var waitTime = strategyWithJitter.Next();
 
             Assert.Equal(_waitTime, waitTime);
         }
 
         [Fact]
-        public void FullJitterMaximumWaitTimeIsAlmostTwiceTheFullWait()
+        public void FullJitterMaximumWaitTimeIsAlmostTheFullWait()
         {
             var strategyWithJitter = _constantStrategy.WithFullJitter(_maxRandomNumberGenerator);
-            var attempts = 1;
 
-            var waitTime = strategyWithJitter.GetWaitTime(attempts);
+            var waitTime = strategyWithJitter.Next();
 
-            Assert.True(_waitTime * 2 * rangeOfError < waitTime);
+            Assert.True(_waitTime * rangeOfError < waitTime);
         }
 
         [Fact]
-        public void HalfJitterMinimuimWaitTimeIsTheWaitTime()
+        public void EqualJitterMinimuimWaitTimeIsTheWaitTime()
         {
             var strategyWithJitter = _constantStrategy.WithEqualJitter(_minRandomNumberGenerator);
-            var attempts = 1;
 
-            var waitTime = strategyWithJitter.GetWaitTime(attempts);
+            var waitTime = strategyWithJitter.Next();
 
             Assert.Equal(_waitTime, waitTime);
         }
 
         [Fact]
-        public void HalfJitterMaximumWaitTimeIsAlmostTheFullWaitPlusHalf()
-        {
+        public void EqualJitterMaximumWaitTimeIsAlmostTheFullWait()
+        { 
             var strategyWithJitter = _constantStrategy.WithEqualJitter(_maxRandomNumberGenerator);
-            var attempts = 1;
 
-            var waitTime = strategyWithJitter.GetWaitTime(attempts);
+            var waitTime = strategyWithJitter.Next();
 
-            Assert.True(_waitTime * 1.5 * rangeOfError < waitTime);
+            Assert.True(_waitTime * rangeOfError < waitTime);
         }
 
         [Fact]
         public void DecorrelatedJitterMinimuimWaitTimeIsTheWaitTime()
         {
-            var strategyWithJitter = _constantStrategy.WithDecorrelatedJitter(_waitTime, _minRandomNumberGenerator);
-            var attempts = 1;
+            var strategyWithJitter = _constantStrategy.WithDecorrelatedJitter(_minRandomNumberGenerator);
 
-            var waitTime = strategyWithJitter.GetWaitTime(attempts);
+            var waitTime = strategyWithJitter.Next();
 
             Assert.Equal(_waitTime, waitTime);
         }
@@ -102,10 +103,9 @@ namespace Resiliency.Tests.BackoffStrategies
         [Fact]
         public void DecorrelatedJitterMaximumWaitTimeIsAlmostThreeTimesTheLastWait()
         {
-            var strategyWithJitter = _constantStrategy.WithDecorrelatedJitter(_waitTime, _maxRandomNumberGenerator);
-            var attempts = 1;
+            var strategyWithJitter = _constantStrategy.WithDecorrelatedJitter(_maxRandomNumberGenerator);
 
-            var waitTime = strategyWithJitter.GetWaitTime(attempts);
+            var waitTime = strategyWithJitter.Next();
 
             Assert.True(_waitTime * 3 * rangeOfError < waitTime);
         }

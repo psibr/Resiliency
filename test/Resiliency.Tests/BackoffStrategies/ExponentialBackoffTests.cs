@@ -6,19 +6,21 @@ namespace Resiliency.Tests.BackoffStrategies
 {
     public class ExponentialBackoffTests
     {
-        [Theory]
-        [InlineData(1, 0)]
-        [InlineData(2, 1)]
-        [InlineData(3, 2)]
-        [InlineData(4, 3)]
-        public void WaitTimeIncreasesExponentially(int attempt, int exponent)
+        [Fact]
+        public void WaitTimeIncreasesExponentially()
         {
             var initialWaitTime = TimeSpan.FromSeconds(30);
             var strategy = new ExponentialBackoffStrategy(initialWaitTime);
 
-            var waitTime = strategy.GetWaitTime(attempt);
+            var attempt1 = strategy.Next();
+            var attempt2 = strategy.Next();
+            var attempt3 = strategy.Next();
+            var attempt4 = strategy.Next();
 
-            Assert.Equal(initialWaitTime * Math.Pow(2, exponent), waitTime);
+            Assert.Equal(initialWaitTime * Math.Pow(2, 0), attempt1);
+            Assert.Equal(initialWaitTime * Math.Pow(2, 1), attempt2);
+            Assert.Equal(initialWaitTime * Math.Pow(2, 2), attempt3);
+            Assert.Equal(initialWaitTime * Math.Pow(2, 3), attempt4);
         }
     }
 }

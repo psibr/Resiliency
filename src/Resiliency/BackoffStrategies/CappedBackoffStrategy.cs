@@ -5,7 +5,8 @@ namespace Resiliency.BackoffStrategies
     /// <summary>
     /// An <see cref="IBackoffStrategy"/> that restricts the wait time of an <see cref="IBackoffStrategy"/> to a given maximum value.
     /// </summary>
-    public class CappedBackoffStrategy : IBackoffStrategy
+    public class CappedBackoffStrategy 
+        : IBackoffStrategy
     {
         private readonly IBackoffStrategy _strategy;
         private readonly TimeSpan _maxWaitTime;
@@ -21,12 +22,10 @@ namespace Resiliency.BackoffStrategies
 
         public TimeSpan InitialWaitTime => _strategy.InitialWaitTime;
 
-        public TimeSpan GetWaitTime(int attemptNumber)
+        public TimeSpan Next()
         {
-            if (attemptNumber < 1)
-                throw new ArgumentException($"The number of attempts cannot be less than 1 when getting the wait time of an {nameof(IBackoffStrategy)}.", nameof(attemptNumber));
+            var minTicks = Math.Min(_maxWaitTime.Ticks, _strategy.Next().Ticks);
 
-            var minTicks = Math.Min(_maxWaitTime.Ticks, _strategy.GetWaitTime(attemptNumber).Ticks);
             return TimeSpan.FromTicks(minTicks);
         }
     }

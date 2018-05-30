@@ -26,7 +26,7 @@ namespace Resiliency.Tests.BackoffStrategies
         public void CompositeWithMaxSelectorReturnsMaxWaitTime()
         {
             var strategy = new CompositeBackoffStrategy(_strategies, waitTimes => waitTimes.Max());
-            var waitTime = strategy.GetWaitTime(1);
+            var waitTime = strategy.Next();
 
             Assert.Equal(_initialWaitTimes.Max(), waitTime);
         }
@@ -35,7 +35,7 @@ namespace Resiliency.Tests.BackoffStrategies
         public void CompositeWithMinSelectorReturnsMinWaitTime()
         {
             var strategy = new CompositeBackoffStrategy(_strategies, waitTimes => waitTimes.Min());
-            var waitTime = strategy.GetWaitTime(1);
+            var waitTime = strategy.Next();
 
             Assert.Equal(_initialWaitTimes.Min(), waitTime);
         }
@@ -44,7 +44,7 @@ namespace Resiliency.Tests.BackoffStrategies
         public void CompositeWithAverageSelectorReturnsAverageWaitTime()
         {
             var strategy = new CompositeBackoffStrategy(_strategies, waitTimes => TimeSpan.FromMilliseconds(waitTimes.Average(time => time.TotalMilliseconds)));
-            var waitTime = strategy.GetWaitTime(1);
+            var waitTime = strategy.Next();
 
             Assert.Equal(TimeSpan.FromMilliseconds(_initialWaitTimes.Average(time => time.TotalMilliseconds)), waitTime);
         }
@@ -54,7 +54,7 @@ namespace Resiliency.Tests.BackoffStrategies
         {
             var completelyDifferentWaitTime = TimeSpan.FromSeconds(23);
             var strategy = new CompositeBackoffStrategy(_strategies, waitTimes => completelyDifferentWaitTime);
-            var waitTime = strategy.GetWaitTime(1);
+            var waitTime = strategy.Next();
 
             Assert.Equal(completelyDifferentWaitTime, waitTime);
         }

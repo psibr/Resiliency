@@ -10,7 +10,7 @@ namespace Resiliency.Tests.BackoffStrategies
         {
             public TimeSpan InitialWaitTime => TimeSpan.FromSeconds(12);
 
-            public TimeSpan GetWaitTime(int attemptNumber)
+            public TimeSpan Next()
             {
                 return InitialWaitTime * -1; // Sneaky.
             }
@@ -35,7 +35,7 @@ namespace Resiliency.Tests.BackoffStrategies
         public void AcceptsConstantAdjustmentEqualToInitialWait()
         {
             var adjustedStrategy = _constantStrategy.WithAdjustment(-_constantStrategy.InitialWaitTime);
-            var waitTime = adjustedStrategy.GetWaitTime(1);
+            var waitTime = adjustedStrategy.Next();
 
             Assert.Equal(TimeSpan.Zero, waitTime);
         }
@@ -44,7 +44,7 @@ namespace Resiliency.Tests.BackoffStrategies
         public void ConstantAdjustmentDefaultsNegativeResultToZero()
         {
             var adjustedStrategy = new NegativeResultBackoffStrategy().WithAdjustment(TimeSpan.FromSeconds(0));
-            var waitTime = adjustedStrategy.GetWaitTime(1);
+            var waitTime = adjustedStrategy.Next();
 
             Assert.Equal(TimeSpan.Zero, waitTime);
         }
@@ -54,7 +54,7 @@ namespace Resiliency.Tests.BackoffStrategies
         {
             TimeSpan adjustment = -(_constantStrategy.InitialWaitTime / 2); 
             var adjustedStrategy =_constantStrategy.WithAdjustment(adjustment);
-            var waitTime = adjustedStrategy.GetWaitTime(1);
+            var waitTime = adjustedStrategy.Next();
 
             Assert.Equal(_constantStrategy.InitialWaitTime + adjustment, waitTime);
         }
@@ -64,7 +64,7 @@ namespace Resiliency.Tests.BackoffStrategies
         {
             TimeSpan adjustment = _constantStrategy.InitialWaitTime / 2;
             var adjustedStrategy = _constantStrategy.WithAdjustment(adjustment);
-            var waitTime = adjustedStrategy.GetWaitTime(1);
+            var waitTime = adjustedStrategy.Next();
 
             Assert.Equal(_constantStrategy.InitialWaitTime + adjustment, waitTime);
         }
@@ -83,7 +83,7 @@ namespace Resiliency.Tests.BackoffStrategies
         public void AcceptsZeroPercentAdjustment()
         {
             var adjustedStrategy = _constantStrategy.WithAdjustment(-_constantStrategy.InitialWaitTime);
-            var waitTime = adjustedStrategy.GetWaitTime(1);
+            var waitTime = adjustedStrategy.Next();
 
             Assert.Equal(TimeSpan.Zero, waitTime);
         }
@@ -92,7 +92,7 @@ namespace Resiliency.Tests.BackoffStrategies
         public void PercentageLowerThan1DecreasesWaitTime()
         {
             var adjustedStrategy = _constantStrategy.WithAdjustment(.5);
-            var waitTime = adjustedStrategy.GetWaitTime(1);
+            var waitTime = adjustedStrategy.Next();
 
             Assert.Equal(_constantStrategy.InitialWaitTime / 2, waitTime);
         }
@@ -101,7 +101,7 @@ namespace Resiliency.Tests.BackoffStrategies
         public void PercentageGreaterThan1IncreasesWaitTime()
         {
             var adjustedStrategy = _constantStrategy.WithAdjustment(1.5);
-            var waitTime = adjustedStrategy.GetWaitTime(1);
+            var waitTime = adjustedStrategy.Next();
 
             Assert.Equal(_constantStrategy.InitialWaitTime * 1.5, waitTime);
         }
@@ -110,7 +110,7 @@ namespace Resiliency.Tests.BackoffStrategies
         public void PercentageEqualTo1DoesNotChangeWaitTime()
         {
             var adjustedStrategy = _constantStrategy.WithAdjustment(1);
-            var waitTime = adjustedStrategy.GetWaitTime(1);
+            var waitTime = adjustedStrategy.Next();
 
             Assert.Equal(_constantStrategy.InitialWaitTime, waitTime);
         }

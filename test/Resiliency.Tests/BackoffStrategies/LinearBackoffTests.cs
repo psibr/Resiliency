@@ -6,19 +6,21 @@ namespace Resiliency.Tests.BackoffStrategies
 {
     public class LinearBackoffTests
     {
-        [Theory]
-        [InlineData(1)]
-        [InlineData(2)]
-        [InlineData(3)]
-        [InlineData(4)]
-        public void WaitTimeIncreasesLinearly(int attempt)
+        [Fact]
+        public void WaitTimeIncreasesLinearly()
         {
             var initialWaitTime = TimeSpan.FromSeconds(30);
             var strategy = new LinearBackoffStrategy(initialWaitTime);
 
-            var waitTime = strategy.GetWaitTime(attempt);
+            var attempt1 = strategy.Next();
+            var attempt2 = strategy.Next();
+            var attempt3 = strategy.Next();
+            var attempt4 = strategy.Next();
 
-            Assert.Equal(initialWaitTime * attempt, waitTime);
+            Assert.Equal(initialWaitTime, attempt1);
+            Assert.Equal(initialWaitTime * 2, attempt2);
+            Assert.Equal(initialWaitTime * 3, attempt3);
+            Assert.Equal(initialWaitTime * 4, attempt4);
         }
     }
 }

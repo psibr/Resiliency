@@ -3,10 +3,13 @@ using System;
 namespace Resiliency.BackoffStrategies
 {
     /// <summary>
-    /// An <see cref="IBackoffStrategy"/> that returns a wait time that grows exponentialls with each attempt made.
+    /// An <see cref="IBackoffStrategy"/> that returns a wait time that grows exponentially with each attempt made.
     /// </summary>
-    public class ExponentialBackoffStrategy : IBackoffStrategy
+    public class ExponentialBackoffStrategy 
+        : IBackoffStrategy
     {
+        private int _attemptNumber;
+
         public ExponentialBackoffStrategy(TimeSpan initialWaitTime) 
         {
             if (initialWaitTime < TimeSpan.Zero)
@@ -17,14 +20,11 @@ namespace Resiliency.BackoffStrategies
 
         public TimeSpan InitialWaitTime { get; }
 
-        public virtual TimeSpan GetWaitTime(int attemptNumber)
+        public virtual TimeSpan Next()
         {
-            if (attemptNumber < 1)
-                throw new ArgumentException($"The number of attempts cannot be less than 1 when getting the wait time of an {nameof(IBackoffStrategy)}.", nameof(attemptNumber));
+            var waitTimeMs = InitialWaitTime.TotalMilliseconds * Math.Pow(2, ++_attemptNumber - 1);
 
-            var waitTimeMs = InitialWaitTime.TotalMilliseconds * Math.Pow(2, attemptNumber - 1);
             return TimeSpan.FromMilliseconds(waitTimeMs);
         }
     }
 }
-

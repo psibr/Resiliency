@@ -1,11 +1,10 @@
 using System;
 using Xunit;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Resiliency.Tests.Functions
 {
-    using System.Threading;
-    using System.Threading.Tasks;
-
     public class ResilentFunctionsReturnTests
     {
         public ResilentFunctionsReturnTests()
@@ -37,7 +36,7 @@ namespace Resiliency.Tests.Functions
                 })
                 .WhenExceptionIs<Exception>(async (op, ex) =>
                 {
-                    if (op.Total.AttemptsExhausted < 3)
+                    if (op.CurrentAttempt < 4)
                     {
                         await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
                     }

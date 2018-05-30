@@ -19,7 +19,7 @@ namespace Resiliency.Tests.Actions
             var resilientOperation = ResilientOperation.From(() => throw new Exception())
                 .WhenExceptionIs<Exception>(async (op, ex) =>
                 {
-                    if (op.Total.AttemptsExhausted < 3)
+                    if (op.CurrentAttempt <= 3)
                     {
                         await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
                     }
@@ -38,7 +38,7 @@ namespace Resiliency.Tests.Actions
                 .AsResilient()
                 .WhenExceptionIs<Exception>(async (op, ex) =>
                 {
-                    if (op.Total.AttemptsExhausted < 3)
+                    if (op.CurrentAttempt <= 3)
                     {
                         await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
                     }

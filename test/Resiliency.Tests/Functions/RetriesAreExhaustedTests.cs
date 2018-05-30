@@ -3,6 +3,7 @@ using Xunit;
 
 namespace Resiliency.Tests.Functions
 {
+    using Resiliency.BackoffStrategies;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -26,7 +27,7 @@ namespace Resiliency.Tests.Functions
                 })
                 .WhenExceptionIs<Exception>(async (op, ex) =>
                 {
-                    if (op.Total.AttemptsExhausted < 3)
+                    if (op.CurrentAttempt <= 3)
                     {
                         await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
                     }
@@ -50,13 +51,14 @@ namespace Resiliency.Tests.Functions
 
             var resilientOperation = asyncOperation
                 .AsResilient()
-                .WhenExceptionIs<Exception>(async (op, ex) =>
-                {
-                    if (op.Total.AttemptsExhausted < 3)
+                .WhenExceptionIs<Exception>( 
+                    async (op, ex) =>
                     {
-                        await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
-                    }
-                })
+                        if (op.CurrentAttempt <= 3)
+                        {
+                            await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
+                        }
+                    })
                 .GetOperation();
 
                 await Assert.ThrowsAsync<Exception>(async () => await resilientOperation(CancellationToken.None));

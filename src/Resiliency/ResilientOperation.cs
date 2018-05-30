@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Resiliency.BackoffStrategies;
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -100,6 +101,7 @@ namespace Resiliency
     }
 
     public partial class ResilientOperation
+        : IResilientOperationInfo
     {
         public ResilientOperation(
             string implicitOperationKey,
@@ -118,13 +120,15 @@ namespace Resiliency
 
         public ResilientOperationHandlerInfo Handler { get; }
 
-        public ResilientOperationTotalInfo Total { get; }
+        internal ResilientOperationTotalInfo Total { get; }
 
         public CancellationToken CancellationToken { get; }
 
         public CircuitBreaker DefaultCircuitBreaker { get; }
 
         internal HandlerResult Result { get; set; }
+
+        public int CurrentAttempt => Total.CurrentAttempt;
 
         public void Retry()
         {
@@ -134,6 +138,35 @@ namespace Resiliency
         public void Cancel()
         {
             Result = HandlerResult.Cancelled;
+        }
+    }
+
+    public class ResilientOperationWithBackoff
+        : ResilientOperation
+    {
+        public ResilientOperationWithBackoff(
+            string implicitOperationKey,
+            ResilientOperationHandlerInfo handler,
+            ResilientOperationTotalInfo total,
+            IBackoffStrategy backoffStrategy,
+            CancellationToken cancellationToken) 
+            : base(implicitOperationKey, handler, total, cancellationToken)
+        {
+            BackoffStrategy = backoffStrategy ?? throw new ArgumentNullException(nameof(backoffStrategy));
+        }
+
+        public IBackoffStrategy BackoffStrategy { get; }
+
+        public static ResilientOperationWithBackoff FromResilientOperation(
+            ResilientOperation resilientOperation,
+            IBackoffStrategy backoffStrategy)
+        {
+            return new ResilientOperationWithBackoff(
+                resilientOperation.ImplicitOperationKey,
+                resilientOperation.Handler,
+                resilientOperation.Total,
+                backoffStrategy,
+                resilientOperation.CancellationToken);
         }
     }
 }
