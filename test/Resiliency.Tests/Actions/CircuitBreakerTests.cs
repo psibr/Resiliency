@@ -24,7 +24,7 @@ namespace Resiliency.Tests.Actions
                 {
                     if (op.CurrentAttempt <= 3)
                     {
-                        await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
+                        await op.RetryAfterAsync(TimeSpan.FromMilliseconds(100));
                     }
                     else
                     {
@@ -48,7 +48,7 @@ namespace Resiliency.Tests.Actions
                 {
                     if (op.CurrentAttempt <= 3)
                     {
-                        await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
+                        await op.RetryAfterAsync(TimeSpan.FromMilliseconds(100));
                     }
                 })
                 .GetOperation();

@@ -35,7 +35,7 @@ namespace Resiliency
 
         public new ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
             IBackoffStrategy backoffStrategy,
-            Func<ResilientOperation, TException, Task> handler)
+            Func<ResilientOperationWithBackoff, TException, Task> handler)
             where TException : Exception
         {
             base.WhenExceptionIs(backoffStrategy, handler);
@@ -55,7 +55,7 @@ namespace Resiliency
         public new ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
             Func<TException, bool> condition,
             IBackoffStrategy backoffStrategy,
-            Func<ResilientOperation, TException, Task> handler)
+            Func<ResilientOperationWithBackoff, TException, Task> handler)
             where TException : Exception
         {
             base.WhenExceptionIs(condition, backoffStrategy, handler);

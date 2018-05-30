@@ -37,7 +37,7 @@ namespace Resiliency
 
         protected void WhenExceptionIs<TException>(
             IBackoffStrategy backoffStrategy,
-            Func<ResilientOperation, TException, Task> handler)
+            Func<ResilientOperationWithBackoff, TException, Task> handler)
             where TException : Exception
         {
             WhenExceptionIs(ex => true, backoffStrategy, handler);
@@ -73,7 +73,7 @@ namespace Resiliency
         protected void WhenExceptionIs<TException>(
             Func<TException, bool> condition,
             IBackoffStrategy backoffStrategy,
-            Func<ResilientOperation, TException, Task> handler)
+            Func<ResilientOperationWithBackoff, TException, Task> handler)
             where TException : Exception
         {
             Handlers.Add(async (op, ex) =>
@@ -85,7 +85,7 @@ namespace Resiliency
                     if (condition(exception))
                     {
                         await handler(
-                            ResilientOperationWithBackoff.FromResilientOperation(op, backoffStrategy),
+                            new ResilientOperationWithBackoff(op, backoffStrategy),
                             exception).ConfigureAwait(false);
 
                         if (op.Result == HandlerResult.Handled)

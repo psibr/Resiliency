@@ -38,12 +38,12 @@ namespace Resiliency.Tests.Functions
                 {
                     if (op.CurrentAttempt < 4)
                     {
-                        await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
+                        await op.RetryAfterAsync(TimeSpan.FromMilliseconds(100));
                     }
                 })
                 .WhenResult(i => i < 42, async (op, i) =>
                 {
-                    await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
+                    await op.RetryAfterAsync(TimeSpan.FromMilliseconds(100));
                 })
                 .GetOperation();
 
