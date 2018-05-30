@@ -36,6 +36,14 @@ namespace Resiliency
         }
 
         protected void WhenExceptionIs<TException>(
+            IBackoffStrategy backoffStrategy,
+            Func<ResilientOperation, TException, Task> handler)
+            where TException : Exception
+        {
+            WhenExceptionIs(ex => true, backoffStrategy, handler);
+        }
+
+        protected void WhenExceptionIs<TException>(
             Func<TException, bool> condition,
             Func<ResilientOperation, TException, Task> handler)
             where TException : Exception
@@ -49,6 +57,36 @@ namespace Resiliency
                     if (condition(exception))
                     {
                         await handler(op, exception).ConfigureAwait(false);
+
+                        if (op.Result == HandlerResult.Handled)
+                        {
+                            op.Handler._attemptsExhausted++;
+                            op.Total._attemptsExhausted++;
+                        }
+                    }
+                }
+
+                return op.Result;
+            });
+        }
+
+        protected void WhenExceptionIs<TException>(
+            Func<TException, bool> condition,
+            IBackoffStrategy backoffStrategy,
+            Func<ResilientOperation, TException, Task> handler)
+            where TException : Exception
+        {
+            Handlers.Add(async (op, ex) =>
+            {
+                op.Result = HandlerResult.Unhandled;
+
+                if (ex is TException exception)
+                {
+                    if (condition(exception))
+                    {
+                        await handler(
+                            ResilientOperationWithBackoff.FromResilientOperation(op, backoffStrategy),
+                            exception).ConfigureAwait(false);
 
                         if (op.Result == HandlerResult.Handled)
                         {

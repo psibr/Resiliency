@@ -1,11 +1,7 @@
-﻿using Resiliency.BackoffStrategies;
-using Resiliency.BackoffStrategies.Jitter;
-using System;
-using System.Collections.Generic;
+﻿using Resiliency.BackoffStrategies.Jitter;
 using System.ComponentModel;
-using System.Text;
 
-namespace Resiliency
+namespace Resiliency.BackoffStrategies
 {
     public static class BackoffStrategyJitterExtensions
     {
@@ -45,7 +41,7 @@ namespace Resiliency
         /// Applies a randomness (jitter) algorithm that selects a value between half of the base wait time and the full base wait time.
         /// </summary>
         /// <param name="strategy">The base wait strategy to apply over.</param>
-        /// /// <param name="randomNumberGenerator">A strategy for selecting a "random" value. This is useful for tests!</param>
+        /// <param name="randomNumberGenerator">A strategy for selecting a "random" value. This is useful for tests!</param>
         /// <returns>A backoff strategy composed of the base and equal jitter.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static IBackoffStrategy WithEqualJitter(this IBackoffStrategy strategy, IRandomNumberGenerator randomNumberGenerator = null)
@@ -67,7 +63,7 @@ namespace Resiliency
         /// Applies a randomness (jitter) algorithm that ranges from the base wait time up to 3 times the last wait time.
         /// </summary>
         /// <param name="strategy">The base wait strategy to apply over.</param>
-        /// /// <param name="randomNumberGenerator">A strategy for selecting a "random" value. This is useful for tests!</param>
+        /// <param name="randomNumberGenerator">A strategy for selecting a "random" value. This is useful for tests!</param>
         /// <returns>A backoff strategy composed of the base and equal jitter.</returns>
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static IBackoffStrategy WithDecorrelatedJitter(this IBackoffStrategy strategy, IRandomNumberGenerator randomNumberGenerator)

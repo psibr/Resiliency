@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Resiliency.BackoffStrategies;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -33,6 +34,16 @@ namespace Resiliency
         }
 
         public new ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
+            IBackoffStrategy backoffStrategy,
+            Func<ResilientOperation, TException, Task> handler)
+            where TException : Exception
+        {
+            base.WhenExceptionIs(backoffStrategy, handler);
+
+            return this;
+        }
+
+        public new ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
             Func<TException, bool> condition,
             Func<ResilientOperation, TException, Task> handler)
             where TException : Exception
@@ -41,7 +52,16 @@ namespace Resiliency
 
             return this;
         }
+        public new ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
+            Func<TException, bool> condition,
+            IBackoffStrategy backoffStrategy,
+            Func<ResilientOperation, TException, Task> handler)
+            where TException : Exception
+        {
+            base.WhenExceptionIs(condition, backoffStrategy, handler);
 
+            return this;
+        }
         public new ResilientActionBuilder<TAction> TimeoutAfter(TimeSpan period)
         {
             base.TimeoutAfter(period);
