@@ -8,7 +8,7 @@ namespace Resiliency.BackoffStrategies
     public class ExponentialBackoffStrategy 
         : IBackoffStrategy
     {
-        private int _attemptNumber;
+        private int _attemptNumber = 0;
 
         public ExponentialBackoffStrategy(TimeSpan initialWaitTime) 
         {

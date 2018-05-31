@@ -8,7 +8,7 @@ namespace Resiliency.BackoffStrategies
     public class LinearBackoffStrategy 
         : IBackoffStrategy
     {
-        private int _attemptNumber;
+        private int _attemptNumber = 0;
 
         public LinearBackoffStrategy(TimeSpan initialWaitTime)
         {
