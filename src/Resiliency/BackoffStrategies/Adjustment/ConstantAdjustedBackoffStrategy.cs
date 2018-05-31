@@ -13,10 +13,11 @@ namespace Resiliency.BackoffStrategies
 
         public ConstantAdjustedBackoffStrategy(IBackoffStrategy strategy, TimeSpan adjustment)
         {
+            _strategy = strategy ?? throw new ArgumentNullException(nameof(strategy));
+
             if (adjustment + strategy.InitialWaitTime < TimeSpan.Zero)
                 throw new ArgumentException("A negative adjustment cannot result in a wait time less than zero.", nameof(adjustment));
 
-            _strategy = strategy;
             _adjustment = adjustment;
         }
 

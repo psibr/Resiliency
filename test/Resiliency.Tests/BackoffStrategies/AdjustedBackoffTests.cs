@@ -69,6 +69,18 @@ namespace Resiliency.Tests.BackoffStrategies
             Assert.Equal(_constantStrategy.InitialWaitTime + adjustment, waitTime);
         }
 
+        [Fact]
+        public void NullStrategyThrowsExceptionForAConstantAdjustment()
+        {
+            IBackoffStrategy decoratedStrategy = null;
+            IRandomNumberGenerator randomNumberGenerator = new DefaultRandomNumberGenerator();
+
+            Assert.Throws<ArgumentNullException>(() =>
+            {
+                new ConstantAdjustedBackoffStrategy(decoratedStrategy, TimeSpan.Zero);
+            });
+        }
+
         #endregion
 
         #region Percentage Adjustment Tests
@@ -113,6 +125,18 @@ namespace Resiliency.Tests.BackoffStrategies
             var waitTime = adjustedStrategy.Next();
 
             Assert.Equal(_constantStrategy.InitialWaitTime, waitTime);
+        }
+
+        [Fact]
+        public void NullStrategyThrowsExceptionForAPercentageAdjustment()
+        {
+            IBackoffStrategy decoratedStrategy = null;
+            IRandomNumberGenerator randomNumberGenerator = new DefaultRandomNumberGenerator();
+
+            Assert.Throws<ArgumentNullException>(() =>
+            {
+                new PercentageAdjustedBackoffStrategy(decoratedStrategy, 1);
+            });
         }
 
         #endregion

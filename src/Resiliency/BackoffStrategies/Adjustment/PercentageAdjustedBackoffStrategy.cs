@@ -13,12 +13,13 @@ namespace Resiliency.BackoffStrategies
 
         public PercentageAdjustedBackoffStrategy(IBackoffStrategy strategy, double percentageAdjustment)
         {
+            _strategy = strategy ?? throw new ArgumentNullException(nameof(strategy));
+
             // Prevent violations of causality. Current systems executing this code don't have this problem,
             // but who knows what system this will run on in the future.
             if (percentageAdjustment < 0)
                 throw new ArgumentException("A negative percentage will result in a negative wait time and is not allowed.", nameof(percentageAdjustment));
 
-            _strategy = strategy;
             _percentageAdjustment = percentageAdjustment;
         }
 
