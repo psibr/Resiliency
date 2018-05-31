@@ -39,8 +39,7 @@ namespace Resiliency.BackoffStrategies.Jitter
         public TimeSpan Next()
         {
             var waitTimeMs = _strategy.Next().TotalMilliseconds;
-            waitTimeMs = _strategy.Next().TotalMilliseconds 
-                * _randomNumberGenerator.Next(MinMultiplier, MaxMultiplier);
+            waitTimeMs = waitTimeMs * _randomNumberGenerator.Next(MinMultiplier, MaxMultiplier);
 
             return TimeSpan.FromMilliseconds(_strategy.Next().TotalMilliseconds);
         }
