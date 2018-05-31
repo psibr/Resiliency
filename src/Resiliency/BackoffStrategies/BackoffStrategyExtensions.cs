@@ -1,6 +1,7 @@
+using Resiliency.BackoffStrategies;
 using System;
 
-namespace Resiliency.BackoffStrategies
+namespace Resiliency
 {
     public static class BackoffStrategyExtensions
     {
