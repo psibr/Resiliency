@@ -109,5 +109,17 @@ namespace Resiliency.Tests.BackoffStrategies
 
             Assert.True(_waitTime * 3 * rangeOfError < waitTime);
         }
+
+        [Fact]
+        public void NullStrategyThrowsException()
+        {
+            IBackoffStrategy decoratedStrategy = null;
+            IRandomNumberGenerator randomNumberGenerator = new DefaultRandomNumberGenerator();
+
+            Assert.Throws<ArgumentNullException>(() =>
+            {
+                new MultiplicativeJitterBackoffStrategy(decoratedStrategy, 0, 1);
+            });
+        }
     }
 }

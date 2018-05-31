@@ -30,29 +30,5 @@ namespace Resiliency.Tests.BackoffStrategies
                 }
             });
         }
-
-        [Theory]
-        [InlineData(typeof(MultiplicativeJitterBackoffStrategy))]
-        public void NullStrategyInDecoratorThrowsException(Type decoratorType)
-        {
-            IBackoffStrategy decoratedStrategy = null;
-            IRandomNumberGenerator randomNumberGenerator = new DefaultRandomNumberGenerator();
-
-            Assert.Throws<ArgumentNullException>(() =>
-            {
-                try
-                {
-                    Activator.CreateInstance(decoratorType, new object[] { decoratedStrategy, 0d, 1d, randomNumberGenerator });
-                }
-                catch (System.Reflection.TargetInvocationException tiex)
-                {
-                    throw tiex.InnerException;
-                }
-                catch (MissingMethodException)
-                {
-                    throw new Exception("The arguments passed into the Activator do not match the constructor of the type being instantiated and may need to be updated.");
-                }
-            });
-        }
     }
 }
