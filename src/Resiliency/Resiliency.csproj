@@ -17,6 +17,8 @@
     <RepositoryUrl>https://github.com/psibr/Resiliency</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>Resiliency, retry, circuit-breaker, timeout</PackageTags>
+    <PackageLicenseUrl>https://github.com/psibr/Resiliency/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
