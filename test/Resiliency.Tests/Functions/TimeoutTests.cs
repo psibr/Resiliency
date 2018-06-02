@@ -36,7 +36,7 @@ namespace Resiliency.Tests.Functions
                 .TimeoutAfter(TimeSpan.FromMilliseconds(20))
                 .WhenExceptionIs<TimeoutException>((op, ex) =>
                 {
-                    if (op.Total.AttemptsExhausted == 0)
+                    if (op.CurrentAttempt == 1)
                     {
                         retryWasHit = true;
 

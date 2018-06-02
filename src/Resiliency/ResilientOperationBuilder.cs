@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Resiliency.BackoffStrategies;
+using System;
 using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
 using System.Threading;
@@ -35,6 +36,14 @@ namespace Resiliency
         }
 
         protected void WhenExceptionIs<TException>(
+            IBackoffStrategy backoffStrategy,
+            Func<ResilientOperationWithBackoff, TException, Task> handler)
+            where TException : Exception
+        {
+            WhenExceptionIs(ex => true, backoffStrategy, handler);
+        }
+
+        protected void WhenExceptionIs<TException>(
             Func<TException, bool> condition,
             Func<ResilientOperation, TException, Task> handler)
             where TException : Exception
@@ -51,8 +60,38 @@ namespace Resiliency
 
                         if (op.Result == HandlerResult.Handled)
                         {
-                            op.Handler.AttemptsExhausted++;
-                            op.Total.AttemptsExhausted++;
+                            op.Handler._attemptsExhausted++;
+                            op.Total._attemptsExhausted++;
+                        }
+                    }
+                }
+
+                return op.Result;
+            });
+        }
+
+        protected void WhenExceptionIs<TException>(
+            Func<TException, bool> condition,
+            IBackoffStrategy backoffStrategy,
+            Func<ResilientOperationWithBackoff, TException, Task> handler)
+            where TException : Exception
+        {
+            Handlers.Add(async (op, ex) =>
+            {
+                op.Result = HandlerResult.Unhandled;
+
+                if (ex is TException exception)
+                {
+                    if (condition(exception))
+                    {
+                        await handler(
+                            new ResilientOperationWithBackoff(op, backoffStrategy),
+                            exception).ConfigureAwait(false);
+
+                        if (op.Result == HandlerResult.Handled)
+                        {
+                            op.Handler._attemptsExhausted++;
+                            op.Total._attemptsExhausted++;
                         }
                     }
                 }

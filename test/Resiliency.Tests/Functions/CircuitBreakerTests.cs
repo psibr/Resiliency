@@ -22,14 +22,16 @@ namespace Resiliency.Tests.Functions
                 .From(() =>
                 {
                     throw new Exception();
-                    
+
+#pragma warning disable CS0162 // Unreachable code detected
                     return Task.FromResult(42);
+#pragma warning restore CS0162 // Unreachable code detected
                 })
                 .WhenExceptionIs<Exception>(async (op, ex) =>
                 {
-                    if (op.Total.AttemptsExhausted < 3)
+                    if (op.CurrentAttempt <= 3)
                     {
-                        await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
+                        await op.RetryAfterAsync(TimeSpan.FromMilliseconds(100));
                     }
                     else
                     {
@@ -58,9 +60,9 @@ namespace Resiliency.Tests.Functions
                     onMissingFactory: () => new CircuitBreaker(new ConsecutiveFailureCircuitBreakerStrategy(3)))
                 .WhenExceptionIs<Exception>(async (op, ex) =>
                 {
-                    if (op.Total.AttemptsExhausted < 3)
+                    if (op.CurrentAttempt <= 3)
                     {
-                        await op.WaitThenRetryAsync(TimeSpan.FromMilliseconds(100));
+                        await op.RetryAfterAsync(TimeSpan.FromMilliseconds(100));
                     }
                 })
                 .GetOperation();

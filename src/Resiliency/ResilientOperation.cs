@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Resiliency.BackoffStrategies;
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -100,6 +101,7 @@ namespace Resiliency
     }
 
     public partial class ResilientOperation
+        : IResilientOperationInfo
     {
         public ResilientOperation(
             string implicitOperationKey,
@@ -116,24 +118,49 @@ namespace Resiliency
 
         public string ImplicitOperationKey { get; }
 
-        public ResilientOperationHandlerInfo Handler { get; }
+        public virtual ResilientOperationHandlerInfo Handler { get; }
 
-        public ResilientOperationTotalInfo Total { get; }
+        internal virtual ResilientOperationTotalInfo Total { get; }
 
-        public CancellationToken CancellationToken { get; }
+        public virtual CancellationToken CancellationToken { get; }
 
-        public CircuitBreaker DefaultCircuitBreaker { get; }
+        public virtual CircuitBreaker DefaultCircuitBreaker { get; }
 
-        internal HandlerResult Result { get; set; }
+        internal virtual HandlerResult Result { get; set; }
 
-        public void Retry()
+        public virtual int CurrentAttempt => Total.CurrentAttempt;
+
+        public virtual void Retry()
         {
             Result = HandlerResult.Handled;
         }
 
-        public void Cancel()
+        public virtual void Cancel()
         {
             Result = HandlerResult.Cancelled;
+        }
+    }
+
+    public class ResilientOperationWithBackoff
+        : ResilientOperation
+    {
+        private readonly ResilientOperation resilientOperation;
+
+        public ResilientOperationWithBackoff(
+            ResilientOperation resilientOperation,
+            IBackoffStrategy backoffStrategy) 
+            : base(resilientOperation.ImplicitOperationKey, resilientOperation.Handler, resilientOperation.Total, resilientOperation.CancellationToken)
+        {
+            this.resilientOperation = resilientOperation;
+            BackoffStrategy = backoffStrategy ?? throw new ArgumentNullException(nameof(backoffStrategy));
+        }
+
+        public IBackoffStrategy BackoffStrategy { get; }
+
+        internal override HandlerResult Result
+        {
+            get => resilientOperation.Result;
+            set => resilientOperation.Result = value;
         }
     }
 }

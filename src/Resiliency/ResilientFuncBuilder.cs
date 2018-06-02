@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Resiliency.BackoffStrategies;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,11 +34,32 @@ namespace Resiliency
         }
 
         public new ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
+            IBackoffStrategy backoffStrategy,
+            Func<ResilientOperationWithBackoff, TException, Task> handler)
+            where TException : Exception
+        {
+            base.WhenExceptionIs(backoffStrategy, handler);
+
+            return this;
+        }
+
+        public new ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
             Func<TException, bool> condition,
             Func<ResilientOperation, TException, Task> handler)
             where TException : Exception
         {
             base.WhenExceptionIs(condition, handler);
+
+            return this;
+        }
+
+        public new ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
+            Func<TException, bool> condition,
+            IBackoffStrategy backoffStrategy,
+            Func<ResilientOperationWithBackoff, TException, Task> handler)
+            where TException : Exception
+        {
+            base.WhenExceptionIs(condition, backoffStrategy, handler);
 
             return this;
         }
@@ -56,8 +78,36 @@ namespace Resiliency
 
                     if (op.Result == HandlerResult.Handled)
                     {
-                        op.Handler.AttemptsExhausted++;
-                        op.Total.AttemptsExhausted++;
+                        op.Handler._attemptsExhausted++;
+                        op.Total._attemptsExhausted++;
+                    }
+                }
+
+                return op.Result;
+            });
+
+            return this;
+        }
+
+        public ResilientFuncBuilder<TFunc, TResult> WhenResult(
+            Func<TResult, bool> condition,
+            IBackoffStrategy backoffStrategy,
+            Func<ResilientOperationWithBackoff, TResult, Task> handler)
+        {
+            ResultHandlers.Add(async (op, result) =>
+            {
+                op.Result = HandlerResult.Unhandled;
+
+                if (condition(result))
+                {
+                    await handler(
+                        new ResilientOperationWithBackoff(op, backoffStrategy),
+                        result).ConfigureAwait(false);
+
+                    if (op.Result == HandlerResult.Handled)
+                    {
+                        op.Handler._attemptsExhausted++;
+                        op.Total._attemptsExhausted++;
                     }
                 }
 
