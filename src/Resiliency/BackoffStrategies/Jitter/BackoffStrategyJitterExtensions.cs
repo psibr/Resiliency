@@ -1,7 +1,8 @@
-﻿using Resiliency.BackoffStrategies.Jitter;
+﻿using Resiliency.BackoffStrategies;
+using Resiliency.BackoffStrategies.Jitter;
 using System.ComponentModel;
 
-namespace Resiliency.BackoffStrategies
+namespace Resiliency
 {
     public static class BackoffStrategyJitterExtensions
     {

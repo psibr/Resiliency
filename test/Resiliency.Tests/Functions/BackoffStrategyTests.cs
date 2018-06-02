@@ -1,7 +1,4 @@
-﻿using Resiliency.BackoffStrategies;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -18,7 +15,9 @@ namespace Resiliency.Tests.Functions
         [Fact]
         public async Task ExceptionHandlersIncrementBackoff()
         {
-            var backoffStrategy = new LinearBackoffStrategy(TimeSpan.FromMilliseconds(250));
+            var backoffStrategy = Backoff
+                .LinearlyFrom(TimeSpan.FromMilliseconds(250))
+                .WithDecorrelatedJitter();
 
             int failureCount = 0;
 
