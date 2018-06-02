@@ -3,6 +3,9 @@ using System;
 
 namespace Resiliency
 {
+    /// <summary>
+    /// A set of factory methods that provide common base strategies for backoffs.
+    /// </summary>
     public static class Backoff
     {
         public static IBackoffStrategy ExponentiallyFrom(TimeSpan initialWaitTime)

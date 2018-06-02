@@ -16,8 +16,7 @@ namespace Resiliency.Tests.Functions
         public async Task ExceptionHandlersIncrementBackoff()
         {
             var backoffStrategy = Backoff
-                .LinearlyFrom(TimeSpan.FromMilliseconds(250))
-                .WithDecorrelatedJitter();
+                .LinearlyFrom(TimeSpan.FromMilliseconds(250));
 
             int failureCount = 0;
 
@@ -39,7 +38,7 @@ namespace Resiliency.Tests.Functions
                 return Task.FromResult(42);
             })
             .WhenExceptionIs<Exception>(
-                backoffStrategy: backoffStrategy,
+                backoffStrategy,
                 async (op, ex) =>
                 {
                     if (op.CurrentAttempt <= 3)
