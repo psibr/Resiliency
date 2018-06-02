@@ -51,13 +51,13 @@ namespace Resiliency.Tests.BackoffStrategies
         }
 
         [Fact]
-        public void FullJitterMinimuimWaitTimeIsTheWaitTime()
+        public void FullJitterMinimuimWaitTimeIsZero()
         {
             var strategyWithJitter = _constantStrategy.WithFullJitter(_minRandomNumberGenerator);
 
             var waitTime = strategyWithJitter.Next();
 
-            Assert.Equal(_waitTime, waitTime);
+            Assert.Equal(TimeSpan.Zero, waitTime);
         }
 
         [Fact]
@@ -71,13 +71,13 @@ namespace Resiliency.Tests.BackoffStrategies
         }
 
         [Fact]
-        public void EqualJitterMinimuimWaitTimeIsTheWaitTime()
+        public void EqualJitterMinimuimWaitTimeIsHalfTheWaitTime()
         {
             var strategyWithJitter = _constantStrategy.WithEqualJitter(_minRandomNumberGenerator);
 
             var waitTime = strategyWithJitter.Next();
 
-            Assert.Equal(_waitTime, waitTime);
+            Assert.Equal(TimeSpan.FromMilliseconds(_waitTime.TotalMilliseconds / 2), waitTime);
         }
 
         [Fact]
