@@ -13,13 +13,18 @@ namespace Resiliency
         /// </summary>
         /// <param name="action">An async action, that supports cancellation, that is not already resilient.</param>
         /// <returns>A new builder for the operation to configure resiliency.</returns>
-        public static ResilientActionBuilder<Func<CancellationToken, Task>> From(
+        public static ResilientActionBuilder From(
             Func<CancellationToken, Task> action,
             [CallerLineNumber] int sourceLineNumber = 0,
             [CallerFilePath] string sourceFilePath = "",
             [CallerMemberName] string memberName = "")
         {
-            return new ResilientActionBuilder<Func<CancellationToken, Task>>(action, sourceLineNumber, sourceFilePath, memberName);
+            return new ResilientActionBuilder(async (cancellationToken) =>
+            {
+                await action(cancellationToken).ConfigureAwait(false);
+
+                return default;
+            }, sourceLineNumber, sourceFilePath, memberName);
         }
 
         /// <summary>
@@ -27,13 +32,18 @@ namespace Resiliency
         /// </summary>
         /// <param name="action">An async action that is not already resilient.</param>
         /// <returns>A new builder for the operation to configure resiliency.</returns>
-        public static ResilientActionBuilder<Func<Task>> From(
+        public static ResilientActionBuilder From(
             Func<Task> action, 
             [CallerLineNumber] int sourceLineNumber = 0,
             [CallerFilePath] string sourceFilePath = "",
             [CallerMemberName] string memberName = "")
         {
-            return new ResilientActionBuilder<Func<Task>>(action, sourceLineNumber, sourceFilePath, memberName);
+            return new ResilientActionBuilder(async (cancellationToken) => 
+            {
+                await action().ConfigureAwait(false);
+
+                return default;
+            }, sourceLineNumber, sourceFilePath, memberName);
         }
 
         /// <summary>
@@ -41,13 +51,18 @@ namespace Resiliency
         /// </summary>
         /// <param name="action">A synchronous action that is not already resilient.</param>
         /// <returns>A new builder for the operation to configure resiliency.</returns>
-        public static ResilientActionBuilder<Action> From(
+        public static ResilientActionBuilder From(
             Action action,
             [CallerLineNumber] int sourceLineNumber = 0,
             [CallerFilePath] string sourceFilePath = "",
             [CallerMemberName] string memberName = "")
         {
-            return new ResilientActionBuilder<Action>(action, sourceLineNumber, sourceFilePath, memberName);
+            return new ResilientActionBuilder((cancellationToken) =>
+            {
+                action();
+
+                return Task.FromResult(default(Unit));
+            }, sourceLineNumber, sourceFilePath, memberName);
         }
 
         /// <summary>

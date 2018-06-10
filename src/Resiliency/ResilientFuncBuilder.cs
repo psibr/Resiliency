@@ -8,28 +8,43 @@ using System.Threading.Tasks;
 namespace Resiliency
 {
     public class ResilientFuncBuilder<TFunc, TResult>
-        : ResilientOperationBuilder<TFunc, ResilientOperation<TResult>, TResult>
     {
-        protected List<Func<Func<CancellationToken, Task<TResult>>, Func<CancellationToken, Task<TResult>>>> CircuitBreakerHandlers
-            = new List<Func<Func<CancellationToken, Task<TResult>>, Func<CancellationToken, Task<TResult>>>>();
+        protected readonly string ImplicitOperationKey;
+        protected readonly TFunc Function;
 
         internal ResilientFuncBuilder(TFunc function, int sourceLineNumber, string sourceFilePath, string memberName)
-            : base(function, sourceLineNumber, sourceFilePath, memberName)
         {
+            Function = function;
+            ImplicitOperationKey = BuildImplicitOperationKey(sourceLineNumber, sourceFilePath, memberName);
+            TimeoutPeriod = Timeout.InfiniteTimeSpan;
+
+            Handlers = new List<Func<ResilientOperation<TResult>, Exception, Task<ResilientOperation<TResult>>>>();
             ResultHandlers = new List<Func<ResilientOperation<TResult>, TResult, Task<ResilientOperation<TResult>>>>();
+            CircuitBreakerHandlers = new List<Func<Func<CancellationToken, Task<TResult>>, Func<CancellationToken, Task<TResult>>>>();
 
             // Add an implicit operation circuit breaker that must be explicitly tripped.
             // This is comonly used for 429 and 503 style exceptions where you KNOW you have been throttled.
             WithCircuitBreaker(ImplicitOperationKey, () => new CircuitBreaker(new ExplicitTripCircuitBreakerStrategy()));
         }
 
+        protected List<Func<ResilientOperation<TResult>, Exception, Task<ResilientOperation<TResult>>>> Handlers { get; }
+
         protected List<Func<ResilientOperation<TResult>, TResult, Task<ResilientOperation<TResult>>>> ResultHandlers { get; }
 
+        protected List<Func<Func<CancellationToken, Task<TResult>>, Func<CancellationToken, Task<TResult>>>> CircuitBreakerHandlers { get; }
+
+        protected TimeSpan TimeoutPeriod { get; private set; }
+
+        private static string BuildImplicitOperationKey(int sourceLineNumber, string sourceFilePath, string memberName)
+        {
+            return $"{sourceFilePath}:{sourceLineNumber}_{memberName}";
+        }
+
         public ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
             Func<IResilientOperation<TResult>, TException, Task> handler)
             where TException : Exception
         {
-            base.WhenExceptionIs(handler);
+            WhenExceptionIs(ex => true, handler);
 
             return this;
         }
@@ -39,7 +54,7 @@ namespace Resiliency
             Func<IResilientOperationWithBackoff<TResult>, TException, Task> handler)
             where TException : Exception
         {
-            base.WhenExceptionIs(backoffStrategy, handler);
+            WhenExceptionIs(ex => true, backoffStrategy, handler);
 
             return this;
         }
@@ -49,7 +64,26 @@ namespace Resiliency
             Func<IResilientOperation<TResult>, TException, Task> handler)
             where TException : Exception
         {
-            base.WhenExceptionIs(condition, handler);
+            Handlers.Add(async (op, ex) =>
+            {
+                op.HandlerResult = HandlerResult.Unhandled;
+
+                if (ex is TException exception)
+                {
+                    if (condition(exception))
+                    {
+                        await handler(op, exception).ConfigureAwait(false);
+
+                        if (op.HandlerResult == HandlerResult.Retry)
+                        {
+                            op.Handler._attemptsExhausted++;
+                            op.Total._attemptsExhausted++;
+                        }
+                    }
+                }
+
+                return op;
+            });
 
             return this;
         }
@@ -60,7 +94,30 @@ namespace Resiliency
             Func<IResilientOperationWithBackoff<TResult>, TException, Task> handler)
             where TException : Exception
         {
-            base.WhenExceptionIs(condition, backoffStrategy, handler);
+            Handlers.Add(async (op, ex) =>
+            {
+                op.HandlerResult = HandlerResult.Unhandled;
+
+                if (ex is TException exception)
+                {
+                    if (condition(exception))
+                    {
+                        op.BackoffStrategy = backoffStrategy;
+
+                        await handler(
+                            op,
+                            exception).ConfigureAwait(false);
+
+                        if (op.HandlerResult == HandlerResult.Retry)
+                        {
+                            op.Handler._attemptsExhausted++;
+                            op.Total._attemptsExhausted++;
+                        }
+                    }
+                }
+
+                return op;
+            });
 
             return this;
         }
@@ -120,9 +177,9 @@ namespace Resiliency
             return this;
         }
 
-        public new ResilientFuncBuilder<TFunc, TResult> TimeoutAfter(TimeSpan period)
+        public ResilientFuncBuilder<TFunc, TResult> TimeoutAfter(TimeSpan period)
         {
-            base.TimeoutAfter(period);
+            TimeoutPeriod = period;
 
             return this;
         }
@@ -350,7 +407,7 @@ namespace Resiliency
 
             Task<TResult> operationTask;
 
-            switch (Operation)
+            switch (Function)
             {
                 case Func<CancellationToken, Task<TResult>> asyncCancellableOperation:
                     operationTask = asyncCancellableOperation(timeoutOrCancelledToken);
@@ -362,7 +419,7 @@ namespace Resiliency
                     operationTask = Task.Run(() => syncOperation(), timeoutOrCancelledToken);
                     break;
                 default:
-                    throw new NotSupportedException($"Operation of type {Operation.GetType()}");
+                    throw new NotSupportedException($"Operation of type {Function.GetType()} not supported.");
             }
 
             if (TimeoutPeriod != Timeout.InfiniteTimeSpan)
