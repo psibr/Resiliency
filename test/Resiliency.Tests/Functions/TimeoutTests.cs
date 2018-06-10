@@ -27,7 +27,7 @@ namespace Resiliency.Tests.Functions
         {
             var retryWasHit = false;
 
-            var resilientOperation = ResilientOperation.From(async () => 
+            var resilientOperation = ResilientOperation.From(async () =>
                 {
                     await Task.Delay(100);
 
@@ -48,6 +48,7 @@ namespace Resiliency.Tests.Functions
                 .GetOperation();
 
             await Assert.ThrowsAsync<TimeoutException>(() => resilientOperation(CancellationToken.None));
+
             Assert.True(retryWasHit);
         }
     }

@@ -1,26 +1,26 @@
 ﻿using Resiliency.BackoffStrategies;
 using System;
 using System.Collections.Generic;
-using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Resiliency
 {
-    public abstract class ResilientOperationBuilder<TOperation>
+    public abstract class ResilientOperationBuilder<TOperation, TResilientOperation, TResult>
+        where TResilientOperation : ResilientOperation<TResult>
     {
         protected readonly string ImplicitOperationKey;
         protected readonly TOperation Operation;
 
         internal ResilientOperationBuilder(TOperation operation, int sourceLineNumber, string sourceFilePath, string memberName)
         {
-            Handlers = new List<Func<ResilientOperation, Exception, Task<HandlerResult>>>();
+            Handlers = new List<Func<TResilientOperation, Exception, Task<ResilientOperation<TResult>>>>();
             Operation = operation;
             ImplicitOperationKey = BuildImplicitOperationKey(sourceLineNumber, sourceFilePath, memberName);
             TimeoutPeriod = Timeout.InfiniteTimeSpan;
         }
 
-        protected List<Func<ResilientOperation, Exception, Task<HandlerResult>>> Handlers { get; }
+        protected List<Func<TResilientOperation, Exception, Task<ResilientOperation<TResult>>>> Handlers { get; }
         protected TimeSpan TimeoutPeriod { get; private set; }
 
         private static string BuildImplicitOperationKey(int sourceLineNumber, string sourceFilePath, string memberName)
@@ -29,7 +29,7 @@ namespace Resiliency
         }
 
         protected void WhenExceptionIs<TException>(
-            Func<ResilientOperation, TException, Task> handler)
+            Func<TResilientOperation, TException, Task> handler)
             where TException : Exception
         {
             WhenExceptionIs(ex => true, handler);
@@ -37,7 +37,7 @@ namespace Resiliency
 
         protected void WhenExceptionIs<TException>(
             IBackoffStrategy backoffStrategy,
-            Func<ResilientOperationWithBackoff, TException, Task> handler)
+            Func<TResilientOperation, TException, Task> handler)
             where TException : Exception
         {
             WhenExceptionIs(ex => true, backoffStrategy, handler);
@@ -45,12 +45,12 @@ namespace Resiliency
 
         protected void WhenExceptionIs<TException>(
             Func<TException, bool> condition,
-            Func<ResilientOperation, TException, Task> handler)
+            Func<TResilientOperation, TException, Task> handler)
             where TException : Exception
         {
             Handlers.Add(async (op, ex) =>
             {
-                op.Result = HandlerResult.Unhandled;
+                op.HandlerResult = HandlerResult.Unhandled;
 
                 if (ex is TException exception)
                 {
@@ -58,7 +58,7 @@ namespace Resiliency
                     {
                         await handler(op, exception).ConfigureAwait(false);
 
-                        if (op.Result == HandlerResult.Handled)
+                        if (op.HandlerResult == HandlerResult.Retry)
                         {
                             op.Handler._attemptsExhausted++;
                             op.Total._attemptsExhausted++;
@@ -66,29 +66,31 @@ namespace Resiliency
                     }
                 }
 
-                return op.Result;
+                return op;
             });
         }
 
         protected void WhenExceptionIs<TException>(
             Func<TException, bool> condition,
             IBackoffStrategy backoffStrategy,
-            Func<ResilientOperationWithBackoff, TException, Task> handler)
+            Func<TResilientOperation, TException, Task> handler)
             where TException : Exception
         {
             Handlers.Add(async (op, ex) =>
             {
-                op.Result = HandlerResult.Unhandled;
+                op.HandlerResult = HandlerResult.Unhandled;
 
                 if (ex is TException exception)
                 {
                     if (condition(exception))
                     {
+                        op.BackoffStrategy = backoffStrategy;
+
                         await handler(
-                            new ResilientOperationWithBackoff(op, backoffStrategy),
+                            op,
                             exception).ConfigureAwait(false);
 
-                        if (op.Result == HandlerResult.Handled)
+                        if (op.HandlerResult == HandlerResult.Retry)
                         {
                             op.Handler._attemptsExhausted++;
                             op.Total._attemptsExhausted++;
@@ -96,32 +98,13 @@ namespace Resiliency
                     }
                 }
 
-                return op.Result;
+                return op;
             });
         }
 
         protected void TimeoutAfter(TimeSpan period)
         {
             TimeoutPeriod = period;
-        }
-
-        protected async Task ProcessHandlers(
-            IEnumerable<Func<Exception, Task<HandlerResult>>> handlers,
-            Exception ex,
-            CancellationToken cancellationToken)
-        {
-            HandlerResult handlerResult = HandlerResult.Unhandled;
-
-            foreach (var handler in handlers)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                    break;
-
-                handlerResult = await handler(ex).ConfigureAwait(false);
-            }
-
-            if (handlerResult != HandlerResult.Handled)
-                ExceptionDispatchInfo.Capture(ex).Throw();
         }
     }
 }

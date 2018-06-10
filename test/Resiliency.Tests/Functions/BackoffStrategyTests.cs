@@ -55,10 +55,14 @@ namespace Resiliency.Tests.Functions
                         await op.RetryAfterAsync(op.BackoffStrategy.Next());
                     }
                 })
+            .WhenResult(value => value == 42, async (op, ex) =>
+            {
+                op.Return(0);
+            })
             .GetOperation();
 
 
-            Assert.Equal(42, await resilientOperation(CancellationToken.None));
+            Assert.Equal(0, await resilientOperation(CancellationToken.None));
             Assert.Equal(4, failureCount);
             Assert.Equal(TimeSpan.FromMilliseconds(250 * 5), backoffStrategy.Next());
 

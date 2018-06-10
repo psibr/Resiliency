@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ActionOperation = System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task>;
@@ -11,8 +12,19 @@ namespace Resiliency
 
     using ActionOperationWrapper = Func<ActionOperation, ActionOperation>;
 
+    public class Unit : IEquatable<Unit>
+    {
+        public bool Equals(Unit other) => true;
+
+        public override bool Equals(object obj) => obj is Unit;
+
+        public override int GetHashCode() => 0;
+
+        public override string ToString() => "()";
+    }
+
     public class ResilientActionBuilder<TAction>
-        : ResilientOperationBuilder<TAction>
+        : ResilientOperationBuilder<TAction, ResilientOperation<Unit>, Unit>
     {
         protected List<ActionOperationWrapper> CircuitBreakerHandlers = new List<ActionOperationWrapper>();
 
@@ -24,8 +36,8 @@ namespace Resiliency
             WithCircuitBreaker(ImplicitOperationKey, () => new CircuitBreaker(new ExplicitTripCircuitBreakerStrategy()));
         }
 
-        public new ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
-            Func<ResilientOperation, TException, Task> handler)
+        public ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
+            Func<IResilientOperation, TException, Task> handler)
             where TException : Exception
         {
             base.WhenExceptionIs(handler);
@@ -33,9 +45,9 @@ namespace Resiliency
             return this;
         }
 
-        public new ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
+        public ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
             IBackoffStrategy backoffStrategy,
-            Func<ResilientOperationWithBackoff, TException, Task> handler)
+            Func<IResilientOperationWithBackoff, TException, Task> handler)
             where TException : Exception
         {
             base.WhenExceptionIs(backoffStrategy, handler);
@@ -43,25 +55,27 @@ namespace Resiliency
             return this;
         }
 
-        public new ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
+        public ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
             Func<TException, bool> condition,
-            Func<ResilientOperation, TException, Task> handler)
+            Func<IResilientOperation, TException, Task> handler)
             where TException : Exception
         {
             base.WhenExceptionIs(condition, handler);
 
             return this;
         }
-        public new ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
+
+        public ResilientActionBuilder<TAction> WhenExceptionIs<TException>(
             Func<TException, bool> condition,
             IBackoffStrategy backoffStrategy,
-            Func<ResilientOperationWithBackoff, TException, Task> handler)
+            Func<IResilientOperationWithBackoff, TException, Task> handler)
             where TException : Exception
         {
             base.WhenExceptionIs(condition, backoffStrategy, handler);
 
             return this;
         }
+
         public new ResilientActionBuilder<TAction> TimeoutAfter(TimeSpan period)
         {
             base.TimeoutAfter(period);
@@ -189,12 +203,12 @@ namespace Resiliency
 
             var totalInfo = new ResilientOperationTotalInfo();
 
-            var partiallyAppliedHandlers = new List<Func<Exception, Task<HandlerResult>>>();
+            var partiallyAppliedHandlers = new List<Func<Exception, Task<ResilientOperation<Unit>>>>();
 
             // Prepare handlers
             foreach (var handler in Handlers)
             {
-                var op = new ResilientOperation(ImplicitOperationKey, new ResilientOperationHandlerInfo(), totalInfo, cancellationToken);
+                var op = new ResilientOperation<Unit>(ImplicitOperationKey, new ResilientOperationHandlerInfo(), totalInfo, cancellationToken);
 
                 partiallyAppliedHandlers.Add((ex) => handler(op, ex));
             }
@@ -205,16 +219,45 @@ namespace Resiliency
                 {
                     await wrappedOperation(cancellationToken).ConfigureAwait(false);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (!(ex is OperationCanceledException))
                 {
-                    try
+                    var exToHandle = ex;
+
+                    ResilientOperation<Unit> op = null;
+
+                    do
                     {
-                        await ProcessHandlers(partiallyAppliedHandlers, ex, cancellationToken);
+                        try
+                        {
+                            foreach (var handler in partiallyAppliedHandlers)
+                            {
+                                op = await handler(exToHandle).ConfigureAwait(false);
+
+                                if (op.HandlerResult == HandlerResult.Unhandled)
+                                    continue;
+                                else if (op.HandlerResult == HandlerResult.Retry)
+                                    break;
+                                else if (op.HandlerResult == HandlerResult.Break)
+                                    break;
+                                else if (op.HandlerResult == HandlerResult.Return)
+                                    return;
+                            }
+
+                            if (op?.HandlerResult == HandlerResult.Retry)
+                                break;
+
+                            ExceptionDispatchInfo.Capture(exToHandle).Throw();
+                        }
+                        catch (Exception handlerEx) when (handlerEx != exToHandle && !(handlerEx is OperationCanceledException))
+                        {
+                            exToHandle = handlerEx;
+
+                            continue;
+                        }
                     }
-                    catch (CircuitBrokenException circuitBrokenEx)
-                    {
-                        await ProcessHandlers(partiallyAppliedHandlers, circuitBrokenEx, cancellationToken);
-                    }
+                    while (true);
+
+                    continue;
                 }
             }
             while (true);

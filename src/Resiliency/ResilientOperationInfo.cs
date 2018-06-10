@@ -1,6 +1,11 @@
 ﻿namespace Resiliency
 {
     public interface IResilientOperationInfo
+        : IHaveCurrentAttempt
+    {
+    }
+
+    public interface IHaveCurrentAttempt
     {
         int CurrentAttempt { get; }
     }

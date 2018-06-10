@@ -100,8 +100,11 @@ namespace Resiliency
         }
     }
 
-    public partial class ResilientOperation
-        : IResilientOperationInfo
+    public partial class ResilientOperation<TResult>
+        : IResilientOperation<TResult>
+        , IResilientOperationInfo
+        , IResilientOperationWithBackoff
+        , IResilientOperationWithBackoff<TResult>
     {
         public ResilientOperation(
             string implicitOperationKey,
@@ -120,47 +123,47 @@ namespace Resiliency
 
         public virtual ResilientOperationHandlerInfo Handler { get; }
 
-        internal virtual ResilientOperationTotalInfo Total { get; }
+        public virtual ResilientOperationTotalInfo Total { get; }
 
         public virtual CancellationToken CancellationToken { get; }
 
         public virtual CircuitBreaker DefaultCircuitBreaker { get; }
 
-        internal virtual HandlerResult Result { get; set; }
+        public virtual HandlerResult HandlerResult { get; set; }
+
+        public virtual IBackoffStrategy BackoffStrategy { get; set; }
+
+        public virtual TResult Result { get; set; }
 
         public virtual int CurrentAttempt => Total.CurrentAttempt;
 
         public virtual void Retry()
         {
-            Result = HandlerResult.Handled;
+            HandlerResult = HandlerResult.Retry;
         }
 
-        public virtual void Cancel()
+        public virtual void Break()
         {
-            Result = HandlerResult.Cancelled;
+            HandlerResult = HandlerResult.Break;
+        }
+
+        public virtual void Return(TResult result)
+        {
+            Result = result;
+
+            HandlerResult = HandlerResult.Return;
         }
     }
 
-    public class ResilientOperationWithBackoff
-        : ResilientOperation
+    public interface IResilientOperationWithBackoff
+        : IResilientOperation
     {
-        private readonly ResilientOperation resilientOperation;
+        IBackoffStrategy BackoffStrategy { get; set; }
+    }
 
-        public ResilientOperationWithBackoff(
-            ResilientOperation resilientOperation,
-            IBackoffStrategy backoffStrategy) 
-            : base(resilientOperation.ImplicitOperationKey, resilientOperation.Handler, resilientOperation.Total, resilientOperation.CancellationToken)
-        {
-            this.resilientOperation = resilientOperation;
-            BackoffStrategy = backoffStrategy ?? throw new ArgumentNullException(nameof(backoffStrategy));
-        }
-
-        public IBackoffStrategy BackoffStrategy { get; }
-
-        internal override HandlerResult Result
-        {
-            get => resilientOperation.Result;
-            set => resilientOperation.Result = value;
-        }
+    public interface IResilientOperationWithBackoff<TResult>
+        : IResilientOperation<TResult>
+        , IResilientOperationWithBackoff
+    {
     }
 }

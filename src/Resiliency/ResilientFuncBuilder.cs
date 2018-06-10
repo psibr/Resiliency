@@ -1,13 +1,14 @@
 ﻿using Resiliency.BackoffStrategies;
 using System;
 using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Resiliency
 {
     public class ResilientFuncBuilder<TFunc, TResult>
-        : ResilientOperationBuilder<TFunc>
+        : ResilientOperationBuilder<TFunc, ResilientOperation<TResult>, TResult>
     {
         protected List<Func<Func<CancellationToken, Task<TResult>>, Func<CancellationToken, Task<TResult>>>> CircuitBreakerHandlers
             = new List<Func<Func<CancellationToken, Task<TResult>>, Func<CancellationToken, Task<TResult>>>>();
@@ -15,17 +16,17 @@ namespace Resiliency
         internal ResilientFuncBuilder(TFunc function, int sourceLineNumber, string sourceFilePath, string memberName)
             : base(function, sourceLineNumber, sourceFilePath, memberName)
         {
-            ResultHandlers = new List<Func<ResilientOperation, TResult, Task<HandlerResult>>>();
+            ResultHandlers = new List<Func<ResilientOperation<TResult>, TResult, Task<ResilientOperation<TResult>>>>();
 
             // Add an implicit operation circuit breaker that must be explicitly tripped.
             // This is comonly used for 429 and 503 style exceptions where you KNOW you have been throttled.
             WithCircuitBreaker(ImplicitOperationKey, () => new CircuitBreaker(new ExplicitTripCircuitBreakerStrategy()));
         }
 
-        protected List<Func<ResilientOperation, TResult, Task<HandlerResult>>> ResultHandlers { get; }
+        protected List<Func<ResilientOperation<TResult>, TResult, Task<ResilientOperation<TResult>>>> ResultHandlers { get; }
 
-        public new ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
-            Func<ResilientOperation, TException, Task> handler)
+        public ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
+            Func<IResilientOperation<TResult>, TException, Task> handler)
             where TException : Exception
         {
             base.WhenExceptionIs(handler);
@@ -33,9 +34,9 @@ namespace Resiliency
             return this;
         }
 
-        public new ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
+        public ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
             IBackoffStrategy backoffStrategy,
-            Func<ResilientOperationWithBackoff, TException, Task> handler)
+            Func<IResilientOperationWithBackoff<TResult>, TException, Task> handler)
             where TException : Exception
         {
             base.WhenExceptionIs(backoffStrategy, handler);
@@ -43,9 +44,9 @@ namespace Resiliency
             return this;
         }
 
-        public new ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
+        public ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
             Func<TException, bool> condition,
-            Func<ResilientOperation, TException, Task> handler)
+            Func<IResilientOperation<TResult>, TException, Task> handler)
             where TException : Exception
         {
             base.WhenExceptionIs(condition, handler);
@@ -53,10 +54,10 @@ namespace Resiliency
             return this;
         }
 
-        public new ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
+        public ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
             Func<TException, bool> condition,
             IBackoffStrategy backoffStrategy,
-            Func<ResilientOperationWithBackoff, TException, Task> handler)
+            Func<IResilientOperationWithBackoff<TResult>, TException, Task> handler)
             where TException : Exception
         {
             base.WhenExceptionIs(condition, backoffStrategy, handler);
@@ -66,24 +67,24 @@ namespace Resiliency
 
         public ResilientFuncBuilder<TFunc, TResult> WhenResult(
             Func<TResult, bool> condition,
-            Func<ResilientOperation, TResult, Task> handler)
+            Func<IResilientOperation<TResult>, TResult, Task> handler)
         {
             ResultHandlers.Add(async (op, result) =>
             {
-                op.Result = HandlerResult.Unhandled;
+                op.HandlerResult = HandlerResult.Unhandled;
 
                 if (condition(result))
                 {
                     await handler(op, result).ConfigureAwait(false);
 
-                    if (op.Result == HandlerResult.Handled)
+                    if (op.HandlerResult == HandlerResult.Retry)
                     {
                         op.Handler._attemptsExhausted++;
                         op.Total._attemptsExhausted++;
                     }
                 }
 
-                return op.Result;
+                return op;
             });
 
             return this;
@@ -92,26 +93,28 @@ namespace Resiliency
         public ResilientFuncBuilder<TFunc, TResult> WhenResult(
             Func<TResult, bool> condition,
             IBackoffStrategy backoffStrategy,
-            Func<ResilientOperationWithBackoff, TResult, Task> handler)
+            Func<IResilientOperationWithBackoff<TResult>, TResult, Task> handler)
         {
             ResultHandlers.Add(async (op, result) =>
             {
-                op.Result = HandlerResult.Unhandled;
+                op.HandlerResult = HandlerResult.Unhandled;
 
                 if (condition(result))
                 {
+                    op.BackoffStrategy = backoffStrategy;
+
                     await handler(
-                        new ResilientOperationWithBackoff(op, backoffStrategy),
+                        op,
                         result).ConfigureAwait(false);
 
-                    if (op.Result == HandlerResult.Handled)
+                    if (op.HandlerResult == HandlerResult.Retry)
                     {
                         op.Handler._attemptsExhausted++;
                         op.Total._attemptsExhausted++;
                     }
                 }
 
-                return op.Result;
+                return op;
             });
 
             return this;
@@ -245,22 +248,22 @@ namespace Resiliency
 
             var totalInfo = new ResilientOperationTotalInfo();
 
-            var partiallyAppliedResultHandlers = new List<Func<TResult, Task<HandlerResult>>>();
+            var partiallyAppliedResultHandlers = new List<Func<TResult, Task<ResilientOperation<TResult>>>>();
 
             // Prepare handlers
             foreach (var handler in ResultHandlers)
             {
-                var op = new ResilientOperation(ImplicitOperationKey, new ResilientOperationHandlerInfo(), totalInfo, cancellationToken);
+                var op = new ResilientOperation<TResult>(ImplicitOperationKey, new ResilientOperationHandlerInfo(), totalInfo, cancellationToken);
 
                 partiallyAppliedResultHandlers.Add(result => handler(op, result));
             }
 
-            var partiallyAppliedHandlers = new List<Func<Exception, Task<HandlerResult>>>();
+            var partiallyAppliedHandlers = new List<Func<Exception, Task<ResilientOperation<TResult>>>>();
 
             // Prepare handlers
             foreach (var handler in Handlers)
             {
-                var op = new ResilientOperation(ImplicitOperationKey, new ResilientOperationHandlerInfo(), totalInfo, cancellationToken);
+                var op = new ResilientOperation<TResult>(ImplicitOperationKey, new ResilientOperationHandlerInfo(), totalInfo, cancellationToken);
 
                 partiallyAppliedHandlers.Add((ex) => handler(op, ex));
             }
@@ -271,31 +274,70 @@ namespace Resiliency
                 {
                     var result = await wrappedOperation(cancellationToken);
 
-                    var handlerResult = HandlerResult.Unhandled;
+                    ResilientOperation<TResult> op = null;
 
                     foreach (var handler in partiallyAppliedResultHandlers)
                     {
-                        if (cancellationToken.IsCancellationRequested)
-                            break;
+                        op = await handler(result).ConfigureAwait(false);
 
-                        handlerResult = await handler(result).ConfigureAwait(false);
+                        if (op.HandlerResult == HandlerResult.Unhandled)
+                            continue;
+                        else if (op.HandlerResult == HandlerResult.Retry)
+                            break;
+                        else if (op.HandlerResult == HandlerResult.Break)
+                            return result;
+                        else if (op.HandlerResult == HandlerResult.Return)
+                            return op.Result;
                     }
 
-                    if(handlerResult == HandlerResult.Handled)
+                    if (op?.HandlerResult == HandlerResult.Retry)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+
                         continue;
+                    }
 
                     return result;
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (!(ex is OperationCanceledException))
                 {
-                    try
+                    var exToHandle = ex;
+
+                    ResilientOperation<TResult> op = null;
+
+                    do
                     {
-                        await ProcessHandlers(partiallyAppliedHandlers, ex, cancellationToken);
+                        try
+                        {
+                            foreach (var handler in partiallyAppliedHandlers)
+                            {
+                                op = await handler(exToHandle).ConfigureAwait(false);
+
+                                if (op.HandlerResult == HandlerResult.Unhandled)
+                                    continue;
+                                else if (op.HandlerResult == HandlerResult.Retry)
+                                    break;
+                                else if (op.HandlerResult == HandlerResult.Break)
+                                    break;
+                                else if (op.HandlerResult == HandlerResult.Return)
+                                    return op.Result;
+                            }
+
+                            if (op?.HandlerResult == HandlerResult.Retry)
+                                break;
+
+                            ExceptionDispatchInfo.Capture(exToHandle).Throw();
+                        }
+                        catch (Exception handlerEx) when (handlerEx != exToHandle && !(handlerEx is OperationCanceledException))
+                        {
+                            exToHandle = handlerEx;
+
+                            continue;
+                        }
                     }
-                    catch (CircuitBrokenException circuitBrokenEx)
-                    {
-                        await ProcessHandlers(partiallyAppliedHandlers, circuitBrokenEx, cancellationToken);
-                    }
+                    while (true);
+
+                    continue;
                 }
             }
             while (true);
