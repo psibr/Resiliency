@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Resiliency.Tests.Functions
+namespace Resiliency.Tests.Circuits
 {
     public class CircuitBreakerTests
     {
