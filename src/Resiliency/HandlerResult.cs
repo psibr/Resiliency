@@ -3,7 +3,8 @@ namespace Resiliency
     public enum HandlerResult
     {
         Unhandled = 0,
-        Handled = 1,
-        Cancelled = 2
+        Retry = 1,
+        Break = 2,
+        Return = 3
     }
 }

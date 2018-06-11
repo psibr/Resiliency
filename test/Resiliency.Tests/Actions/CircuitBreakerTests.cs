@@ -19,8 +19,8 @@ namespace Resiliency.Tests.Actions
         public async Task ExplicitTripWorks()
         {
             var resilientOperation = ResilientOperation
-                .From(() => throw new Exception())
-                .WhenExceptionIs<Exception>(async (op, ex) =>
+                .From(() => throw new InvalidOperationException())
+                .WhenExceptionIs<InvalidOperationException>(async (op, ex) =>
                 {
                     if (op.CurrentAttempt <= 3)
                     {

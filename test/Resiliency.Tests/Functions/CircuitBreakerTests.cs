@@ -21,13 +21,13 @@ namespace Resiliency.Tests.Functions
             var resilientOperation = ResilientOperation
                 .From(() =>
                 {
-                    throw new Exception();
+                    throw new InvalidOperationException();
 
 #pragma warning disable CS0162 // Unreachable code detected
                     return Task.FromResult(42);
 #pragma warning restore CS0162 // Unreachable code detected
                 })
-                .WhenExceptionIs<Exception>(async (op, ex) =>
+                .WhenExceptionIs<InvalidOperationException>(async (op, ex) =>
                 {
                     if (op.CurrentAttempt <= 3)
                     {

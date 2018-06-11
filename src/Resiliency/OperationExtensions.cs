@@ -12,7 +12,7 @@ namespace Resiliency
         /// </summary>
         /// <param name="action">An async action, that supports cancellation, that is not already resilient.</param>
         /// <returns>A new builder for the operation to configure resiliency.</returns>
-        public static ResilientActionBuilder<Func<CancellationToken, Task>> AsResilient(
+        public static ResilientActionBuilder AsResilient(
             this Func<CancellationToken, Task> action,
             [CallerLineNumber] int sourceLineNumber = 0,
             [CallerFilePath] string sourceFilePath = "",
@@ -26,7 +26,7 @@ namespace Resiliency
         /// </summary>
         /// <param name="action">An async action that is not already resilient.</param>
         /// <returns>A new builder for the operation to configure resiliency.</returns>
-        public static ResilientActionBuilder<Func<Task>> AsResilient(
+        public static ResilientActionBuilder AsResilient(
             this Func<Task> action,
             [CallerLineNumber] int sourceLineNumber = 0,
             [CallerFilePath] string sourceFilePath = "",
@@ -40,7 +40,7 @@ namespace Resiliency
         /// </summary>
         /// <param name="action">A synchronous action that is not already resilient.</param>
         /// <returns>A new builder for the operation to configure resiliency.</returns>
-        public static ResilientActionBuilder<Action> AsResilient(
+        public static ResilientActionBuilder AsResilient(
             this Action action,
             [CallerLineNumber] int sourceLineNumber = 0,
             [CallerFilePath] string sourceFilePath = "",
