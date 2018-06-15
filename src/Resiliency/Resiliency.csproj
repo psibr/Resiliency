@@ -8,6 +8,7 @@
 
   <PropertyGroup>
     <Authors>Ovan Crone</Authors>
+    <Owners>Ovan Crone, PSIBR LLC</Owners>
     <Company>PSIBR LLC</Company>
     <Description>Add resiliency to your async operations with retries, timeouts, and circuit-breakers.</Description>
     <Copyright>PSIBR LLC 2018</Copyright>
