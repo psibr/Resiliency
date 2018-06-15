@@ -55,9 +55,11 @@ namespace Resiliency.Tests.Functions
                         await op.RetryAfterAsync(op.BackoffStrategy.Next());
                     }
                 })
-            .WhenResult(value => value == 42, async (op, ex) =>
+            .WhenResult(value => value == 42, (op, ex) =>
             {
                 op.Return(0);
+
+                return Task.CompletedTask;
             })
             .GetOperation();
 

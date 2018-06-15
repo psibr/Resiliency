@@ -1,15 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.1;net452</TargetFrameworks>
+    <TargetFrameworks>netstandard1.1;netstandard2.0;net452;net46</TargetFrameworks>
     <LangVersion>latest</LangVersion>
+    <DebugType>embed</DebugType>
   </PropertyGroup>
 
   <PropertyGroup>
     <Authors>Ovan Crone</Authors>
     <Company>PSIBR LLC</Company>
     <Description>Add resiliency to your async operations with retries, timeouts, and circuit-breakers.</Description>
-    <Copyright>PSIBR 2018</Copyright>
+    <Copyright>PSIBR LLC 2018</Copyright>
     <Version>0.1.0</Version>
     <AssemblyVersion>0.1.0.0</AssemblyVersion>
     <FileVersion>0.1.0.0</FileVersion>
@@ -23,7 +24,6 @@
 
   <ItemGroup>
     <PackageReference Include="System.Collections.Concurrent" Version="4.3.0" />
-    <PackageReference Include="System.ValueTuple" Version="4.4.0" />
   </ItemGroup>
 
 </Project>
