@@ -1,11 +1,10 @@
 using System;
 using Xunit;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Resiliency.Tests.Circuits
 {
-    using System.Threading;
-    using System.Threading.Tasks;
-
     public class CircuitBreakerUnitTests
     {
         [Fact]
@@ -15,23 +14,23 @@ namespace Resiliency.Tests.Circuits
 
             var circuitBreakerInstance = new CircuitBreaker(strategy);
 
-            CircuitBreaker.RegisterCircuitBreaker("ConsecutiveFailureCircuitBreakerStrategy", circuitBreakerInstance);
+            CircuitBreaker.Panel.Add("ConsecutiveFailureCircuitBreakerStrategy", circuitBreakerInstance);
 
-            Assert.Equal<CircuitBreaker>(circuitBreakerInstance, CircuitBreaker.GetCircuitBreaker("ConsecutiveFailureCircuitBreakerStrategy"));
+            Assert.Equal(circuitBreakerInstance, CircuitBreaker.Panel["ConsecutiveFailureCircuitBreakerStrategy"]);
         }
 
         [Fact]
         public void ThrowsErrorWhenNoRegisteredCircuitBreaker()
         {
-            Assert.Throws<ArgumentException>(() => CircuitBreaker.GetCircuitBreaker("ThrowsErrorWhenNoRegisteredCircuitBreaker"));
+            Assert.Throws<ArgumentException>(() => CircuitBreaker.Panel["ThrowsErrorWhenNoRegisteredCircuitBreaker"]);
         }
 
         [Fact]
         public void CreatesCircuitBreakerWhenNone()
         {
-            Func<CircuitBreaker> circuitBreakerFactory = () => new CircuitBreaker(new ConsecutiveFailureCircuitBreakerStrategy(9));
+            CircuitBreaker CircuitBreakerFactory() => new CircuitBreaker(new ConsecutiveFailureCircuitBreakerStrategy(9));
 
-            var circuitBreaker = CircuitBreaker.GetOrAddCircuitBreaker("CreatesCircuitBreakerWhenNone", circuitBreakerFactory);
+            var circuitBreaker = CircuitBreaker.Panel.GetOrAdd("CreatesCircuitBreakerWhenNone", CircuitBreakerFactory);
 
             Assert.NotNull(circuitBreaker);
         }
@@ -39,11 +38,11 @@ namespace Resiliency.Tests.Circuits
         [Fact]
         public void RegisterCircuitBreakerWhenExists()
         {
-            Func<CircuitBreaker> circuitBreakerFactory = () => new CircuitBreaker(new ConsecutiveFailureCircuitBreakerStrategy(9));
+            CircuitBreaker CircuitBreakerFactory() => new CircuitBreaker(new ConsecutiveFailureCircuitBreakerStrategy(9));
 
-            var circuitBreaker = CircuitBreaker.GetOrAddCircuitBreaker("RegisterCircuitBreakerWhenExists", circuitBreakerFactory);
+            CircuitBreaker.Panel.GetOrAdd("RegisterCircuitBreakerWhenExists", CircuitBreakerFactory);
 
-            Assert.Throws<InvalidOperationException>(() => CircuitBreaker.RegisterCircuitBreaker("RegisterCircuitBreakerWhenExists", new CircuitBreaker(new ConsecutiveFailureCircuitBreakerStrategy(2))));
+            Assert.Throws<InvalidOperationException>(() => CircuitBreaker.Panel.Add("RegisterCircuitBreakerWhenExists", new CircuitBreaker(new ConsecutiveFailureCircuitBreakerStrategy(2))));
         }
     }
 }

@@ -186,7 +186,7 @@ namespace Resiliency
 
         public ResilientFuncBuilder<TFunc, TResult> WithCircuitBreaker(string operationKey, Func<CircuitBreaker> onMissingFactory)
         {
-            var circuitBreaker = CircuitBreaker.GetOrAddCircuitBreaker(operationKey, onMissingFactory);
+            var circuitBreaker = CircuitBreaker.Panel.GetOrAdd(operationKey, onMissingFactory);
 
             return WithCircuitBreaker(circuitBreaker);
         }
@@ -201,7 +201,7 @@ namespace Resiliency
             {
                 return async (cancellationToken) =>
                 {
-                    bool lockTaken = false;
+                    var lockTaken = false;
 
                     switch (circuitBreaker.State)
                     {
@@ -339,11 +339,11 @@ namespace Resiliency
 
                         if (op.HandlerResult == HandlerResult.Unhandled)
                             continue;
-                        else if (op.HandlerResult == HandlerResult.Retry)
+                        if (op.HandlerResult == HandlerResult.Retry)
                             break;
-                        else if (op.HandlerResult == HandlerResult.Break)
+                        if (op.HandlerResult == HandlerResult.Break)
                             return result;
-                        else if (op.HandlerResult == HandlerResult.Return)
+                        if (op.HandlerResult == HandlerResult.Return)
                             return op.Result;
                     }
 
@@ -372,11 +372,11 @@ namespace Resiliency
 
                                 if (op.HandlerResult == HandlerResult.Unhandled)
                                     continue;
-                                else if (op.HandlerResult == HandlerResult.Retry)
+                                if (op.HandlerResult == HandlerResult.Retry)
                                     break;
-                                else if (op.HandlerResult == HandlerResult.Break)
+                                if (op.HandlerResult == HandlerResult.Break)
                                     break;
-                                else if (op.HandlerResult == HandlerResult.Return)
+                                if (op.HandlerResult == HandlerResult.Return)
                                     return op.Result;
                             }
 
@@ -388,13 +388,9 @@ namespace Resiliency
                         catch (Exception handlerEx) when (handlerEx != exToHandle && !(handlerEx is OperationCanceledException))
                         {
                             exToHandle = handlerEx;
-
-                            continue;
                         }
                     }
                     while (true);
-
-                    continue;
                 }
             }
             while (true);

@@ -5,9 +5,9 @@ namespace Resiliency
 {
     public class CircuitBreaker
     {
-        private readonly ICircuitBreakerStratgey Strategy;
+        private ICircuitBreakerStratgey Strategy { get; }
 
-        private readonly CircuitBreakerOptions Options;
+        private CircuitBreakerOptions Options { get; }
 
         internal readonly object SyncRoot = new object();
 
@@ -16,7 +16,7 @@ namespace Resiliency
             Options = options ?? new CircuitBreakerOptions();
             State = Options.InitialState;
             StateLastChangedAt = DateTimeOffset.UtcNow;
-            Strategy = strategy;            
+            Strategy = strategy;
         }
 
         public CircuitState State { get; private set; }
@@ -89,28 +89,45 @@ namespace Resiliency
             HalfOpenSuccessCount = 0;
             LastException = null;
         }
+        public static CircuitBreakerPanel Panel => CircuitBreakerPanel.Instance;
+    }
 
-        public static CircuitBreaker GetCircuitBreaker(string key)
+    public class CircuitBreakerPanel
+    {
+        private ConcurrentDictionary<string, CircuitBreaker> CircuitBreakers { get; }
+
+        static CircuitBreakerPanel()
         {
-            if(CircuitBreakers.TryGetValue(key, out var circuitBreaker))
-                return circuitBreaker;
+            PanelLazy = new Lazy<CircuitBreakerPanel>(() => new CircuitBreakerPanel());
+        }
 
+        public CircuitBreakerPanel()
+        {
+            CircuitBreakers = new ConcurrentDictionary<string, CircuitBreaker>();
+        }
+
+        public CircuitBreaker this[string key] => Get(key);
+
+        private static readonly Lazy<CircuitBreakerPanel> PanelLazy;
+
+        public static CircuitBreakerPanel Instance => PanelLazy.Value;
+
+        public CircuitBreaker Get(string key)
+        {
+            if (CircuitBreakers.TryGetValue(key, out var circuitBreaker))
+                return circuitBreaker;
             throw new ArgumentException($"No circuit breaker registered with key: {key}.", nameof(key));
         }
 
-        public static CircuitBreaker GetOrAddCircuitBreaker(string key, Func<CircuitBreaker> factory)
+        public CircuitBreaker GetOrAdd(string key, Func<CircuitBreaker> factory)
         {
-            return CircuitBreakers.GetOrAdd(key, (opKey) => factory());
+            return CircuitBreakers.GetOrAdd(key, opKey => factory());
         }
 
-        public static void RegisterCircuitBreaker(string key, CircuitBreaker circuitBreaker)
+        public void Add(string key, CircuitBreaker circuitBreaker)
         {
-            if (CircuitBreakers.TryAdd(key, circuitBreaker))
-                return;
-
-            throw new InvalidOperationException($"A circuit breaker with key: {key} already registered.");
+            if (!CircuitBreakers.TryAdd(key, circuitBreaker))
+                throw new InvalidOperationException($"A circuit breaker with key: {key} already registered.");
         }
-
-        private static ConcurrentDictionary<string, CircuitBreaker> CircuitBreakers = new ConcurrentDictionary<string, CircuitBreaker>();
     }
 }

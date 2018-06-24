@@ -115,7 +115,7 @@ namespace Resiliency
         }
     }
 
-    public partial class ResilientOperation<TResult>
+    public class ResilientOperation<TResult>
         : IResilientOperation<TResult>
         , IResilientOperationInfo
         , IResilientOperationWithBackoff
@@ -131,7 +131,7 @@ namespace Resiliency
             Handler = handler;
             Total = total;
             CancellationToken = cancellationToken;
-            DefaultCircuitBreaker = CircuitBreaker.GetCircuitBreaker(implicitOperationKey);
+            DefaultCircuitBreaker = CircuitBreaker.Panel[implicitOperationKey];
         }
 
         public string ImplicitOperationKey { get; }
