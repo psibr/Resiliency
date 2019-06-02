@@ -50,16 +50,6 @@ namespace Resiliency
         }
 
         public ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
-            IBackoffStrategy backoffStrategy,
-            Func<IResilientOperationWithBackoff<TResult>, TException, Task> handler)
-            where TException : Exception
-        {
-            WhenExceptionIs(ex => true, backoffStrategy, handler);
-
-            return this;
-        }
-
-        public ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
             Func<TException, bool> condition,
             Func<IResilientOperation<TResult>, TException, Task> handler)
             where TException : Exception
@@ -88,40 +78,6 @@ namespace Resiliency
             return this;
         }
 
-        public ResilientFuncBuilder<TFunc, TResult> WhenExceptionIs<TException>(
-            Func<TException, bool> condition,
-            IBackoffStrategy backoffStrategy,
-            Func<IResilientOperationWithBackoff<TResult>, TException, Task> handler)
-            where TException : Exception
-        {
-            Handlers.Add(async (op, ex) =>
-            {
-                op.HandlerResult = HandlerResult.Unhandled;
-
-                if (ex is TException exception)
-                {
-                    if (condition(exception))
-                    {
-                        op.BackoffStrategy = backoffStrategy;
-
-                        await handler(
-                            op,
-                            exception).ConfigureAwait(false);
-
-                        if (op.HandlerResult == HandlerResult.Retry)
-                        {
-                            op.Handler._attemptsExhausted++;
-                            op.Total._attemptsExhausted++;
-                        }
-                    }
-                }
-
-                return op;
-            });
-
-            return this;
-        }
-
         public ResilientFuncBuilder<TFunc, TResult> WhenResult(
             Func<TResult, bool> condition,
             Func<IResilientOperation<TResult>, TResult, Task> handler)
@@ -133,36 +89,6 @@ namespace Resiliency
                 if (condition(result))
                 {
                     await handler(op, result).ConfigureAwait(false);
-
-                    if (op.HandlerResult == HandlerResult.Retry)
-                    {
-                        op.Handler._attemptsExhausted++;
-                        op.Total._attemptsExhausted++;
-                    }
-                }
-
-                return op;
-            });
-
-            return this;
-        }
-
-        public ResilientFuncBuilder<TFunc, TResult> WhenResult(
-            Func<TResult, bool> condition,
-            IBackoffStrategy backoffStrategy,
-            Func<IResilientOperationWithBackoff<TResult>, TResult, Task> handler)
-        {
-            ResultHandlers.Add(async (op, result) =>
-            {
-                op.HandlerResult = HandlerResult.Unhandled;
-
-                if (condition(result))
-                {
-                    op.BackoffStrategy = backoffStrategy;
-
-                    await handler(
-                        op,
-                        result).ConfigureAwait(false);
 
                     if (op.HandlerResult == HandlerResult.Retry)
                     {

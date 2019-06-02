@@ -1,7 +1,6 @@
 using System;
 using Xunit;
 using Resiliency.BackoffStrategies;
-using Resiliency.BackoffStrategies.Jitter;
 
 namespace Resiliency.Tests.BackoffStrategies
 {

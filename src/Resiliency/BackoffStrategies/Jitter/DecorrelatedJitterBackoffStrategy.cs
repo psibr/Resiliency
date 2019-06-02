@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel;
 
 namespace Resiliency.BackoffStrategies.Jitter
 {
@@ -10,31 +9,26 @@ namespace Resiliency.BackoffStrategies.Jitter
     /// </summary>
     public class DecorrelatedJitterBackoffStrategy 
         : IBackoffStrategy
+        , IRequireRandom
     {
         private readonly IBackoffStrategy _strategy;
-        private readonly IRandomNumberGenerator _randomNumberGenerator;
 
         private TimeSpan _lastWaitTime;
 
         public DecorrelatedJitterBackoffStrategy(IBackoffStrategy strategy)
-            : this(strategy, new DefaultRandomNumberGenerator())
-        {
-        }
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public DecorrelatedJitterBackoffStrategy(IBackoffStrategy strategy, IRandomNumberGenerator randomNumberGenerator)
         {
             _strategy = strategy ?? throw new ArgumentNullException(nameof(strategy));
             _lastWaitTime = _strategy.InitialWaitTime;
-            _randomNumberGenerator = randomNumberGenerator ?? throw new ArgumentNullException(nameof(randomNumberGenerator));
         }
 
         TimeSpan IBackoffStrategy.InitialWaitTime => _strategy.InitialWaitTime;
 
+        public IRandomNumberGenerator RandomNumberGenerator { get; set; } = new DefaultRandomNumberGenerator();
+
         public TimeSpan Next()
         {
             var waitTime = TimeSpan.FromMilliseconds(
-                _randomNumberGenerator.Next(
+                RandomNumberGenerator.Next(
                     minValue: _strategy.Next().TotalMilliseconds, 
                     maxValue: _lastWaitTime.TotalMilliseconds * 3));
 

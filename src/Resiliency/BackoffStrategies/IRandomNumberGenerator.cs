@@ -8,7 +8,6 @@ namespace Resiliency.BackoffStrategies
     /// <summary>
     /// An interface for a random number generator that loosely follows the methods provided by the System.Random class.
     /// </summary>
-    [EditorBrowsable(EditorBrowsableState.Never)]
     public interface IRandomNumberGenerator
     {
         /// <summary>

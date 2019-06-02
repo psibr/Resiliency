@@ -1,24 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.1;netstandard2.0;net452;net46</TargetFrameworks>
-    <LangVersion>latest</LangVersion>
-    <DebugType>embedded</DebugType>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup>
-    <Authors>Ovan Crone</Authors>
-    <Owners>Ovan Crone, PSIBR LLC</Owners>
+    <Authors>Aida Crone</Authors>
+    <Owners>Aida Crone, PSIBR LLC</Owners>
     <Company>PSIBR LLC</Company>
     <Description>Add resiliency to your async operations with retries, timeouts, and circuit-breakers.</Description>
-    <Copyright>PSIBR LLC 2018</Copyright>
-    <Version>0.1.0</Version>
-    <AssemblyVersion>0.1.0.0</AssemblyVersion>
-    <FileVersion>0.1.0.0</FileVersion>
+    <Copyright>PSIBR LLC 2019</Copyright>
     <PackageProjectUrl>https://github.com/psibr/Resiliency</PackageProjectUrl>
     <RepositoryUrl>https://github.com/psibr/Resiliency</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>Resiliency, retry, circuit-breaker, timeout</PackageTags>
+    <PackageTags>Resiliency, retry, circuit-breakers, timeout</PackageTags>
     <PackageLicenseUrl>https://github.com/psibr/Resiliency/blob/master/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <SignAssembly>true</SignAssembly>

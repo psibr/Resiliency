@@ -118,8 +118,6 @@ namespace Resiliency
     public partial class ResilientOperation<TResult>
         : IResilientOperation<TResult>
         , IResilientOperationInfo
-        , IResilientOperationWithBackoff
-        , IResilientOperationWithBackoff<TResult>
     {
         public ResilientOperation(
             string implicitOperationKey,
@@ -146,39 +144,34 @@ namespace Resiliency
 
         public virtual HandlerResult HandlerResult { get; set; }
 
-        public virtual IBackoffStrategy BackoffStrategy { get; set; }
-
         public virtual TResult Result { get; set; }
 
         public virtual int CurrentAttempt => Total.CurrentAttempt;
 
+        /// <summary>
+        /// Informs the operation to retry once the handler finishes execution.
+        /// </summary>
         public virtual void Retry()
         {
             HandlerResult = HandlerResult.Retry;
         }
 
+        /// <summary>
+        /// Informs the operation to stop without trying again; no value will be returned.
+        /// </summary>
         public virtual void Break()
         {
             HandlerResult = HandlerResult.Break;
         }
 
+        /// <summary>
+        /// Informs the operation to stop without trying again and provides a value to be returned.
+        /// </summary>
         public virtual void Return(TResult result)
         {
             Result = result;
 
             HandlerResult = HandlerResult.Return;
         }
-    }
-
-    public interface IResilientOperationWithBackoff
-        : IResilientOperation
-    {
-        IBackoffStrategy BackoffStrategy { get; set; }
-    }
-
-    public interface IResilientOperationWithBackoff<TResult>
-        : IResilientOperation<TResult>
-        , IResilientOperationWithBackoff
-    {
     }
 }

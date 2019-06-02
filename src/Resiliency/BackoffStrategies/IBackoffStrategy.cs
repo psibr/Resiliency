@@ -3,7 +3,7 @@ using System;
 namespace Resiliency.BackoffStrategies
 {
     /// <summary>
-    /// Calculates the amount of time to wait in between retries.
+    /// Calculates the amount of time to wait in between retries. Backoff strategies are stateful.
     /// </summary>
     public interface IBackoffStrategy
     {

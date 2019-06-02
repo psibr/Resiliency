@@ -1,12 +1,17 @@
 ﻿using Resiliency.BackoffStrategies;
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ActionOperation = System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task>;
 
 namespace Resiliency
 {
-    internal class Unit : IEquatable<Unit>
+    /// <summary>
+    /// Represents the absence of a value.
+    /// </summary>
+    [StructLayout(LayoutKind.Explicit, Size=0, CharSet=CharSet.Ansi)]
+    internal readonly struct Unit : IEquatable<Unit>
     {
         public bool Equals(Unit other) => true;
 
@@ -43,32 +48,11 @@ namespace Resiliency
         }
 
         public ResilientActionBuilder WhenExceptionIs<TException>(
-            IBackoffStrategy backoffStrategy,
-            Func<IResilientOperationWithBackoff, TException, Task> handler)
-            where TException : Exception
-        {
-            ResilientFuncBuilder.WhenExceptionIs(backoffStrategy, handler);
-
-            return this;
-        }
-
-        public ResilientActionBuilder WhenExceptionIs<TException>(
             Func<TException, bool> condition,
             Func<IResilientOperation, TException, Task> handler)
             where TException : Exception
         {
             ResilientFuncBuilder.WhenExceptionIs(condition, handler);
-
-            return this;
-        }
-
-        public ResilientActionBuilder WhenExceptionIs<TException>(
-            Func<TException, bool> condition,
-            IBackoffStrategy backoffStrategy,
-            Func<IResilientOperationWithBackoff, TException, Task> handler)
-            where TException : Exception
-        {
-            ResilientFuncBuilder.WhenExceptionIs(condition, backoffStrategy, handler);
 
             return this;
         }

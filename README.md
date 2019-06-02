@@ -21,6 +21,8 @@ class Program
             try
             {
                 await PingAsync(CancellationToken.None);
+
+				break;
             }
             catch(HttpNotFoundException)
             {
@@ -51,4 +53,4 @@ class Program
     }
 }
 ```
-I would argue even in the simplest example, Resiliency's approach is more intuitive to the reader, and once you get past the initial learning curve, easier to write. This benefit drastically increases as more handling and advanced cases get added.
+Even in the simplest example, Resiliency's approach is intuitive and less error-prone. This benefit drastically increases as more handling and advanced cases get added.

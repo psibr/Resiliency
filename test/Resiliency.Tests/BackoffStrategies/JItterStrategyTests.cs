@@ -53,7 +53,9 @@ namespace Resiliency.Tests.BackoffStrategies
         [Fact]
         public void FullJitterMinimuimWaitTimeIsZero()
         {
-            var strategyWithJitter = _constantStrategy.WithFullJitter(_minRandomNumberGenerator);
+            var strategyWithJitter = _constantStrategy.WithFullJitter();
+
+            ((IRequireRandom)strategyWithJitter).RandomNumberGenerator = _minRandomNumberGenerator;
 
             var waitTime = strategyWithJitter.Next();
 
@@ -63,7 +65,9 @@ namespace Resiliency.Tests.BackoffStrategies
         [Fact]
         public void FullJitterMaximumWaitTimeIsAlmostTheFullWait()
         {
-            var strategyWithJitter = _constantStrategy.WithFullJitter(_maxRandomNumberGenerator);
+            var strategyWithJitter = _constantStrategy.WithFullJitter();
+
+            ((IRequireRandom)strategyWithJitter).RandomNumberGenerator = _maxRandomNumberGenerator;
 
             var waitTime = strategyWithJitter.Next();
 
@@ -73,7 +77,9 @@ namespace Resiliency.Tests.BackoffStrategies
         [Fact]
         public void EqualJitterMinimuimWaitTimeIsHalfTheWaitTime()
         {
-            var strategyWithJitter = _constantStrategy.WithEqualJitter(_minRandomNumberGenerator);
+            var strategyWithJitter = _constantStrategy.WithEqualJitter();
+
+            ((IRequireRandom)strategyWithJitter).RandomNumberGenerator = _minRandomNumberGenerator;
 
             var waitTime = strategyWithJitter.Next();
 
@@ -83,7 +89,9 @@ namespace Resiliency.Tests.BackoffStrategies
         [Fact]
         public void EqualJitterMaximumWaitTimeIsAlmostTheFullWait()
         { 
-            var strategyWithJitter = _constantStrategy.WithEqualJitter(_maxRandomNumberGenerator);
+            var strategyWithJitter = _constantStrategy.WithEqualJitter();
+
+            ((IRequireRandom)strategyWithJitter).RandomNumberGenerator = _maxRandomNumberGenerator;
 
             var waitTime = strategyWithJitter.Next();
 
@@ -93,7 +101,9 @@ namespace Resiliency.Tests.BackoffStrategies
         [Fact]
         public void DecorrelatedJitterMinimuimWaitTimeIsTheWaitTime()
         {
-            var strategyWithJitter = _constantStrategy.WithDecorrelatedJitter(_minRandomNumberGenerator);
+            var strategyWithJitter = _constantStrategy.WithDecorrelatedJitter();
+
+            ((IRequireRandom)strategyWithJitter).RandomNumberGenerator = _minRandomNumberGenerator;
 
             var waitTime = strategyWithJitter.Next();
 
@@ -103,7 +113,9 @@ namespace Resiliency.Tests.BackoffStrategies
         [Fact]
         public void DecorrelatedJitterMaximumWaitTimeIsAlmostThreeTimesTheLastWait()
         {
-            var strategyWithJitter = _constantStrategy.WithDecorrelatedJitter(_maxRandomNumberGenerator);
+            var strategyWithJitter = _constantStrategy.WithDecorrelatedJitter();
+
+            ((IRequireRandom)strategyWithJitter).RandomNumberGenerator = _maxRandomNumberGenerator;
 
             var waitTime = strategyWithJitter.Next();
 
