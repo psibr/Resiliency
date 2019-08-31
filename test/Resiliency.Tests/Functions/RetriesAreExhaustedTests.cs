@@ -14,7 +14,7 @@ namespace Resiliency.Tests.Functions
         }
 
         [Fact]
-        public async Task ThrowsOnceRetryHandlersAreExhausted()
+        public Task ThrowsOnceRetryHandlersAreExhausted()
         {
             var resilientOperation = ResilientOperation.From(() =>
                 {
@@ -33,11 +33,11 @@ namespace Resiliency.Tests.Functions
                 })
                 .GetOperation();
 
-            await Assert.ThrowsAsync<Exception>(async () => await resilientOperation(CancellationToken.None));
+            return Assert.ThrowsAsync<Exception>(async () => await resilientOperation(CancellationToken.None));
         }
 
         [Fact]
-        public async Task ExtensionThrowsOnceRetryHandlersAreExhausted()
+        public Task ExtensionThrowsOnceRetryHandlersAreExhausted()
         {
             Func<Task<int>> asyncOperation = () =>
             {
@@ -60,7 +60,7 @@ namespace Resiliency.Tests.Functions
                     })
                 .GetOperation();
 
-                await Assert.ThrowsAsync<Exception>(async () => await resilientOperation(CancellationToken.None));
+            return Assert.ThrowsAsync<Exception>(async () => await resilientOperation(CancellationToken.None));
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Resiliency.Tests.Circuits
         }
 
         [Fact]
-        public async Task ExplicitTripWorks()
+        public Task ExplicitTripWorks()
         {
             var resilientOperation = ResilientOperation
                 .From(() =>
@@ -38,11 +38,11 @@ namespace Resiliency.Tests.Circuits
                 })
                 .GetOperation();
 
-            await Assert.ThrowsAsync<CircuitBrokenException>(async () => await resilientOperation(CancellationToken.None));
+            return Assert.ThrowsAsync<CircuitBrokenException>(async () => await resilientOperation(CancellationToken.None));
         }
 
         [Fact]
-        public async Task CircuitBreaksAfterConsecutiveFailures()
+        public Task CircuitBreaksAfterConsecutiveFailures()
         {
             var resilientOperation = ResilientOperation
                 .From(() =>
@@ -65,7 +65,7 @@ namespace Resiliency.Tests.Circuits
                 })
                 .GetOperation();
 
-            await Assert.ThrowsAsync<CircuitBrokenException>(async () => await resilientOperation(CancellationToken.None));
+            return Assert.ThrowsAsync<CircuitBrokenException>(async () => await resilientOperation(CancellationToken.None));
         }
     }
 }

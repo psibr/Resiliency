@@ -8,13 +8,13 @@ namespace Resiliency.Tests.Actions
     public class TimeoutTests
     {
         [Fact]
-        public async Task TimeoutExceptionIsThrown()
+        public Task TimeoutExceptionIsThrown()
         {
             var resilientOperation = ResilientOperation.From(() => Task.Delay(100))
                 .TimeoutAfter(TimeSpan.FromMilliseconds(20))
                 .GetOperation();
 
-            await Assert.ThrowsAsync<TimeoutException>(() => resilientOperation(CancellationToken.None));
+            return Assert.ThrowsAsync<TimeoutException>(() => resilientOperation(CancellationToken.None));
         }
 
         [Fact]

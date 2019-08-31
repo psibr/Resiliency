@@ -8,7 +8,7 @@ namespace Resiliency.Tests.Functions
     public class TimeoutTests
     {
         [Fact]
-        public async Task TimeoutExceptionIsThrown()
+        public Task TimeoutExceptionIsThrown()
         {
             var resilientOperation = ResilientOperation.From(async () =>
                 {
@@ -19,7 +19,7 @@ namespace Resiliency.Tests.Functions
                 .TimeoutAfter(TimeSpan.FromMilliseconds(20))
                 .GetOperation();
 
-            await Assert.ThrowsAsync<TimeoutException>(() => resilientOperation(CancellationToken.None));
+            return Assert.ThrowsAsync<TimeoutException>(() => resilientOperation(CancellationToken.None));
         }
 
         [Fact]
