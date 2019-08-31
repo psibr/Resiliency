@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
-
-namespace Resiliency.BackoffStrategies
+﻿namespace Resiliency.BackoffStrategies
 {
     /// <summary>
     /// An interface for a random number generator that loosely follows the methods provided by the System.Random class.

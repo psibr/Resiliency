@@ -3,7 +3,6 @@ using Xunit;
 
 namespace Resiliency.Tests.Functions
 {
-    using Resiliency.BackoffStrategies;
     using System.Threading;
     using System.Threading.Tasks;
 

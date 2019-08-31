@@ -3,9 +3,6 @@ using Xunit;
 
 namespace Resiliency.Tests.Circuits
 {
-    using System.Threading;
-    using System.Threading.Tasks;
-
     public class CircuitBreakerOptionsTests
     {
         [Fact]
