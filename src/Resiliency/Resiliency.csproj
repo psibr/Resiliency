@@ -15,7 +15,7 @@
     <RepositoryUrl>https://github.com/psibr/Resiliency</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>Resiliency, retry, circuit-breakers, timeout</PackageTags>
-    <PackageLicenseUrl>https://github.com/psibr/Resiliency/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Properties\Resiliency.snk</AssemblyOriginatorKeyFile>
