@@ -3,7 +3,7 @@
 namespace Resiliency.BackoffStrategies
 {
     /// <summary>
-    /// An <see cref="IBackoffStrategy"/> that offsets an <see cref="IBackoffStrategy"/ by a constant factor.
+    /// An <see cref="IBackoffStrategy"/> that offsets an <see cref="IBackoffStrategy"/> by a constant factor.
     /// </summary>
     public class ConstantAdjustedBackoffStrategy 
         : IBackoffStrategy
