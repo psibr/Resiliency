@@ -20,6 +20,7 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Properties\Resiliency.snk</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
+    <PackageIconUrl>https://avatars1.githubusercontent.com/u/18148301</PackageIconUrl>
   </PropertyGroup>
 
   <ItemGroup>
