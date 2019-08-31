@@ -4,7 +4,7 @@ using System.Threading;
 namespace Resiliency
 {
     public class ConsecutiveFailureCircuitBreakerStrategy
-        : ICircuitBreakerStratgey
+        : ICircuitBreakerStrategy
     {
         private readonly int MaxConsecutiveFailureCount;
 

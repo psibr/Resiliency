@@ -2,7 +2,7 @@
 
 namespace Resiliency
 {
-    public interface ICircuitBreakerStratgey
+    public interface ICircuitBreakerStrategy
     {
         bool ShouldTrip(Exception ex);
 

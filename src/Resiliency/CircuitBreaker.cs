@@ -5,13 +5,13 @@ namespace Resiliency
 {
     public class CircuitBreaker
     {
-        private readonly ICircuitBreakerStratgey Strategy;
+        private readonly ICircuitBreakerStrategy Strategy;
 
         private readonly CircuitBreakerOptions Options;
 
         internal readonly object SyncRoot = new object();
 
-        public CircuitBreaker(ICircuitBreakerStratgey strategy, CircuitBreakerOptions options = null)
+        public CircuitBreaker(ICircuitBreakerStrategy strategy, CircuitBreakerOptions options = null)
         {
             Options = options ?? new CircuitBreakerOptions();
             State = Options.InitialState;

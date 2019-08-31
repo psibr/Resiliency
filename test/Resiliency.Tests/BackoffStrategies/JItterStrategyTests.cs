@@ -51,7 +51,7 @@ namespace Resiliency.Tests.BackoffStrategies
         }
 
         [Fact]
-        public void FullJitterMinimuimWaitTimeIsZero()
+        public void FullJitterMinimumWaitTimeIsZero()
         {
             var strategyWithJitter = _constantStrategy.WithFullJitter();
 
@@ -75,7 +75,7 @@ namespace Resiliency.Tests.BackoffStrategies
         }
 
         [Fact]
-        public void EqualJitterMinimuimWaitTimeIsHalfTheWaitTime()
+        public void EqualJitterMinimumWaitTimeIsHalfTheWaitTime()
         {
             var strategyWithJitter = _constantStrategy.WithEqualJitter();
 
@@ -99,7 +99,7 @@ namespace Resiliency.Tests.BackoffStrategies
         }
 
         [Fact]
-        public void DecorrelatedJitterMinimuimWaitTimeIsTheWaitTime()
+        public void DecorrelatedJitterMinimumWaitTimeIsTheWaitTime()
         {
             var strategyWithJitter = _constantStrategy.WithDecorrelatedJitter();
 

@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace Resiliency.Tests.Functions
 {
-    public class ResilentFunctionsReturnTests
+    public class ResilientFunctionsReturnTests
     {
-        public ResilentFunctionsReturnTests()
+        public ResilientFunctionsReturnTests()
         {
             ResilientOperation.WaiterFactory = (cancellationToken) => new FakeWaiter(cancellationToken);
         }

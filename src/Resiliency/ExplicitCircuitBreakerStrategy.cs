@@ -3,7 +3,7 @@
 namespace Resiliency
 {
     public class ExplicitTripCircuitBreakerStrategy
-        : ICircuitBreakerStratgey
+        : ICircuitBreakerStrategy
     {
         public bool ShouldTrip(Exception ex)
         {
