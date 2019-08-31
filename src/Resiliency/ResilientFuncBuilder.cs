@@ -1,5 +1,4 @@
-﻿using Resiliency.BackoffStrategies;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
 using System.Threading;

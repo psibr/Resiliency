@@ -1,5 +1,4 @@
-﻿using Resiliency.BackoffStrategies;
-using System;
+﻿using System;
 using System.Threading.Tasks;
 
 namespace Resiliency
