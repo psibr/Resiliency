@@ -14,7 +14,7 @@ This example shows a simple first pass at handling a Ping result.
 ```csharp
 class Program
 {
-    public static async Task Main(string[] args)
+    public static async Task Main()
     {
         do
         {
@@ -40,9 +40,9 @@ A more comprehensive example in Resiliency may look like this.
 ```csharp
 class Program
 {
-    public static async Task Main(string[] args)
+    public static Task Main()
     {
-        await ResilientOperation.From(PingAsync)
+        return ResilientOperation.From(PingAsync)
             .WhenExceptionIs<HttpNotFoundException>(async (op, ex) =>
             {
                 await op.RetryAfterAsync(TimeSpan.FromSeconds(5));
