@@ -143,7 +143,7 @@ namespace Resiliency
                                         circuitBreaker.TestCircuit();
 
                                         // Attempt the operation.
-                                        return await AttemptHalfOpenExecution();
+                                        return await AttemptHalfOpenExecution().ConfigureAwait(false);
                                     }
                                 }
                                 finally
@@ -166,7 +166,7 @@ namespace Resiliency
                                 if (lockTaken)
                                 {
                                     // Attempt the operation.
-                                    return await AttemptHalfOpenExecution();
+                                    return await AttemptHalfOpenExecution().ConfigureAwait(false);
                                 }
                             }
                             finally
@@ -254,7 +254,7 @@ namespace Resiliency
             {
                 try
                 {
-                    var result = await wrappedOperation(cancellationToken);
+                    var result = await wrappedOperation(cancellationToken).ConfigureAwait(false);
 
                     ResilientOperation<TResult> op = null;
 
