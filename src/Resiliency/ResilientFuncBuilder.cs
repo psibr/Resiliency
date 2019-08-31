@@ -23,7 +23,7 @@ namespace Resiliency
             CircuitBreakerHandlers = new List<Func<Func<CancellationToken, Task<TResult>>, Func<CancellationToken, Task<TResult>>>>();
 
             // Add an implicit operation circuit breaker that must be explicitly tripped.
-            // This is comonly used for 429 and 503 style exceptions where you KNOW you have been throttled.
+            // This is commonly used for 429 and 503 style exceptions where you KNOW you have been throttled.
             WithCircuitBreaker(ImplicitOperationKey, () => new CircuitBreaker(new ExplicitTripCircuitBreakerStrategy()));
         }
 
