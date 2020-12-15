@@ -40,9 +40,9 @@ A more comprehensive example in Resiliency may look like this.
 ```csharp
 class Program
 {
-    public static Task Main()
+    public static async Task Main()
     {
-        return ResilientOperation.From(PingAsync)
+        await ResilientOperation.From(PingAsync)
             .WhenExceptionIs<HttpNotFoundException>(async (op, ex) =>
             {
                 await op.RetryAfterAsync(TimeSpan.FromSeconds(5));
@@ -53,4 +53,3 @@ class Program
     }
 }
 ```
-Even in the simplest example, Resiliency's approach is intuitive and less error-prone. This benefit drastically increases as more handling and advanced cases get added.
